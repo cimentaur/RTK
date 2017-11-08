@@ -21,7 +21,8 @@
 
 #include "rtkFourDROOSTERConeBeamReconstructionFilter.h"
 #include "rtkThreeDCircularProjectionGeometryXMLFile.h"
-#include "rtkPhasesToInterpolationWeights.h"
+#include "rtkSignalToInterpolationWeights.h"
+#include "rtkReorderProjectionsImageFilter.h"
 
 #ifdef RTK_USE_CUDA
   #include "itkCudaImage.h"
@@ -92,57 +93,145 @@ int main(int argc, char * argv[])
 
     inputFilter = constantImageSource;
     }
-  inputFilter->Update();
+  TRY_AND_EXIT_ON_ITK_EXCEPTION( inputFilter->Update() )
   inputFilter->ReleaseDataFlagOn();
 
-  // ROI reader
-  typedef itk::ImageFileReader<  VolumeType > InputReaderType;
-  InputReaderType::Pointer motionMaskReader = InputReaderType::New();
-  motionMaskReader->SetFileName( args_info.motionmask_arg );
+  // Re-order geometry and projections
+  // In the new order, projections with identical phases are packed together
+  std::vector<double> signal = rtk::ReadSignalFile(args_info.signal_arg);
+  typedef rtk::ReorderProjectionsImageFilter<ProjectionStackType> ReorderProjectionsFilterType;
+  ReorderProjectionsFilterType::Pointer reorder = ReorderProjectionsFilterType::New();
+  reorder->SetInput(reader->GetOutput());
+  reorder->SetInputGeometry(geometryReader->GetOutputObject());
+  reorder->SetInputSignal(signal);
+  TRY_AND_EXIT_ON_ITK_EXCEPTION( reorder->Update() )
 
-  // Read the phases file
-  rtk::PhasesToInterpolationWeights::Pointer phaseReader = rtk::PhasesToInterpolationWeights::New();
-  phaseReader->SetFileName(args_info.signal_arg);
-  phaseReader->SetNumberOfReconstructedFrames(inputFilter->GetOutput()->GetLargestPossibleRegion().GetSize(3));
-  phaseReader->Update();
+  // Release the memory holding the stack of original projections
+  reader->GetOutput()->ReleaseData();
 
-  // Set the forward and back projection filters to be used
+  // Compute the interpolation weights
+  rtk::SignalToInterpolationWeights::Pointer signalToInterpolationWeights = rtk::SignalToInterpolationWeights::New();
+  signalToInterpolationWeights->SetSignal(reorder->GetOutputSignal());
+  signalToInterpolationWeights->SetNumberOfReconstructedFrames(inputFilter->GetOutput()->GetLargestPossibleRegion().GetSize(3));
+  TRY_AND_EXIT_ON_ITK_EXCEPTION( signalToInterpolationWeights->Update() )
+  
+  // Create the 4DROOSTER filter, connect the basic inputs, and set the basic parameters
+  // Also set the forward and back projection filters to be used
   typedef rtk::FourDROOSTERConeBeamReconstructionFilter<VolumeSeriesType, ProjectionStackType> ROOSTERFilterType;
   ROOSTERFilterType::Pointer rooster = ROOSTERFilterType::New();
   rooster->SetForwardProjectionFilter(args_info.fp_arg);
   rooster->SetBackProjectionFilter(args_info.bp_arg);
   rooster->SetInputVolumeSeries(inputFilter->GetOutput() );
-  rooster->SetInputProjectionStack(reader->GetOutput());
-  rooster->SetMotionMask(motionMaskReader->GetOutput());
-  rooster->SetGeometry( geometryReader->GetOutputObject() );
   rooster->SetCG_iterations( args_info.cgiter_arg );
   rooster->SetMainLoop_iterations( args_info.niter_arg );
-  rooster->SetTV_iterations( args_info.tviter_arg );
-  rooster->SetWeights(phaseReader->GetOutput());
-  rooster->SetGammaSpace(args_info.gamma_space_arg);
-  rooster->SetGammaTime(args_info.gamma_time_arg);
-  if (args_info.order_given)
-    {
-    rooster->SetWaveletsSpatialDenoising(true);
-    rooster->SetOrder(args_info.order_arg);
-    }
-  if (args_info.levels_given)
-    {
-    rooster->SetWaveletsSpatialDenoising(true);
-    rooster->SetNumberOfLevels(args_info.levels_arg);
-    }
   rooster->SetPhaseShift(args_info.shift_arg);
   rooster->SetCudaConjugateGradient(args_info.cudacg_flag);
+  rooster->SetUseCudaCyclicDeformation(args_info.cudadvfinterpolation_flag);
+  rooster->SetDisableDisplacedDetectorFilter(args_info.nodisplaced_flag);
+  
+  // Set the newly ordered arguments
+  rooster->SetInputProjectionStack( reorder->GetOutput() );
+  rooster->SetGeometry( reorder->GetOutputGeometry() );
+  rooster->SetWeights(signalToInterpolationWeights->GetOutput());
+  rooster->SetSignal(reorder->GetOutputSignal());
 
+  // For each optional regularization step, set whether or not
+  // it should be performed, and provide the necessary inputs
+  
+  // Positivity
+  if (args_info.nopositivity_flag)
+    rooster->SetPerformPositivity(false);
+  else
+    rooster->SetPerformPositivity(true);
+  
+  // Motion mask
+  typedef itk::ImageFileReader<  VolumeType > InputReaderType;
+  if (args_info.motionmask_given)
+    {
+    InputReaderType::Pointer motionMaskReader = InputReaderType::New();
+    motionMaskReader->SetFileName( args_info.motionmask_arg );
+    TRY_AND_EXIT_ON_ITK_EXCEPTION( motionMaskReader->Update() )
+    rooster->SetMotionMask(motionMaskReader->GetOutput());
+    rooster->SetPerformMotionMask(true);
+    }
+  else
+    rooster->SetPerformMotionMask(false);
+    
+  // Spatial TV
+  if (args_info.gamma_space_given)
+    {
+    rooster->SetGammaTVSpace(args_info.gamma_space_arg);
+    rooster->SetTV_iterations(args_info.tviter_arg);
+    rooster->SetPerformTVSpatialDenoising(true);
+    }
+  else
+    rooster->SetPerformTVSpatialDenoising(false);
+  
+  // Spatial wavelets
+  if (args_info.threshold_given)
+    {
+    rooster->SetSoftThresholdWavelets(args_info.threshold_arg);
+    rooster->SetOrder(args_info.order_arg);
+    rooster->SetNumberOfLevels(args_info.levels_arg);
+    rooster->SetPerformWaveletsSpatialDenoising(true);
+    }
+  else
+    rooster->SetPerformWaveletsSpatialDenoising(false);
+  
+  // Temporal TV
+  if (args_info.gamma_time_given)
+    {
+    rooster->SetGammaTVTime(args_info.gamma_time_arg);
+    rooster->SetTV_iterations(args_info.tviter_arg);
+    rooster->SetPerformTVTemporalDenoising(true);
+    }
+  else
+    rooster->SetPerformTVTemporalDenoising(false);
+
+  // Temporal L0
+  if (args_info.lambda_time_given)
+    {
+    rooster->SetLambdaL0Time(args_info.lambda_time_arg);
+    rooster->SetL0_iterations(args_info.l0iter_arg);
+    rooster->SetPerformL0TemporalDenoising(true);
+    }
+  else
+    rooster->SetPerformL0TemporalDenoising(false);
+
+  // Total nuclear variation
+  if (args_info.gamma_tnv_given)
+    {
+    rooster->SetGammaTNV(args_info.gamma_tnv_arg);
+    rooster->SetTV_iterations(args_info.tviter_arg);
+    rooster->SetPerformTNVDenoising(true);
+    }
+  else
+    rooster->SetPerformTNVDenoising(false);
+
+  // Warping
   if (args_info.dvf_given)
     {
     rooster->SetPerformWarping(true);
 
+    if(args_info.nn_flag)
+      rooster->SetUseNearestNeighborInterpolationInWarping(true);
+
     // Read DVF
     DVFReaderType::Pointer dvfReader = DVFReaderType::New();
     dvfReader->SetFileName( args_info.dvf_arg );
-    dvfReader->Update();
+    TRY_AND_EXIT_ON_ITK_EXCEPTION( dvfReader->Update() )
     rooster->SetDisplacementField(dvfReader->GetOutput());
+
+    if (args_info.idvf_given)
+      {
+      rooster->SetComputeInverseWarpingByConjugateGradient(false);
+
+      // Read inverse DVF if provided
+      DVFReaderType::Pointer idvfReader = DVFReaderType::New();
+      idvfReader->SetFileName( args_info.idvf_arg );
+      TRY_AND_EXIT_ON_ITK_EXCEPTION( idvfReader->Update() )
+      rooster->SetInverseDisplacementField(idvfReader->GetOutput());
+      }
     }
 
   itk::TimeProbe readerProbe;
@@ -154,19 +243,19 @@ int main(int argc, char * argv[])
 
   TRY_AND_EXIT_ON_ITK_EXCEPTION( rooster->Update() )
 
-  if(args_info.time_flag)
-    {
-    rooster->PrintTiming(std::cout);
-    readerProbe.Stop();
-    std::cout << "It took...  " << readerProbe.GetMean() << ' ' << readerProbe.GetUnit() << std::endl;
-    }
+//  if(args_info.time_flag)
+//    {
+//    rooster->PrintTiming(std::cout);
+//    readerProbe.Stop();
+//    std::cout << "It took...  " << readerProbe.GetMean() << ' ' << readerProbe.GetUnit() << std::endl;
+//    }
 
   // Write
   typedef itk::ImageFileWriter< VolumeSeriesType > WriterType;
   WriterType::Pointer writer = WriterType::New();
   writer->SetFileName( args_info.output_arg );
   writer->SetInput( rooster->GetOutput() );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() );
+  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
 
   return EXIT_SUCCESS;
 }

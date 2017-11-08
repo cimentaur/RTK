@@ -16,14 +16,18 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkUnwarpSequenceImageFilter_h
-#define __rtkUnwarpSequenceImageFilter_h
-
-#include <itkMultiplyImageFilter.h>
+#ifndef rtkUnwarpSequenceImageFilter_h
+#define rtkUnwarpSequenceImageFilter_h
 
 #include "rtkConjugateGradientImageFilter.h"
 #include "rtkUnwarpSequenceConjugateGradientOperator.h"
 #include "rtkWarpSequenceImageFilter.h"
+#include "rtkConstantImageSource.h"
+
+#ifdef RTK_USE_CUDA
+#  include "rtkCudaConjugateGradientImageFilter_4f.h"
+#  include "rtkCudaConstantVolumeSeriesSource.h"
+#endif
 
 namespace rtk
 {
@@ -34,31 +38,26 @@ namespace rtk
    *
    * \dot
    * digraph UnwarpSequenceImageFilter {
-   *
+   * 
    * Input0 [ label="Input 0 (4D volume sequence)"];
    * Input0 [shape=Mdiamond];
    * Input1 [label="Input 1 (4D DVF)"];
    * Input1 [shape=Mdiamond];
    * Output [label="Output (4D volume sequence)"];
    * Output [shape=Mdiamond];
-   *
+   * 
    * node [shape=box];
-   * ZeroMultiplyVolumeSequence [label="itk::MultiplyImageFilter (by zero)" URL="\ref itk::MultiplyImageFilter"];
-   * WarpSequenceForward [label="rtk::WarpSequenceImageFilter (forward)" URL="\ref rtk::WarpSequenceImageFilter"];
+   * ConstantSource [label="rtk::ConstantImageSource (4D volume sequence)" URL="\ref rtk::WarpSequenceImageFilter"];
+   * WarpSequenceForward [label="rtk::WarpSequenceImageFilter (forward mapping)" URL="\ref rtk::WarpSequenceImageFilter"];
    * ConjugateGradient[ label="rtk::ConjugateGradientImageFilter" URL="\ref rtk::ConjugateGradientImageFilter"];
-   * AfterInput0 [label="", fixedsize="false", width=0, height=0, shape=none];
-   * AfterInput1 [label="", fixedsize="false", width=0, height=0, shape=none];
-   *
-   * Input0 -> AfterInput0 [arrowhead=none];
-   * AfterInput0 -> ZeroMultiplyVolumeSequence;
-   * AfterInput0 -> WarpSequenceForward;
-   * Input1 -> AfterInput1;
-   * AfterInput1 -> WarpSequenceForward;
-   * AfterInput1 -> ConjugateGradient;
-   * ZeroMultiplyVolumeSequence -> ConjugateGradient;
+   * CyclicDeformation [label="rtk::CyclicDeformationImageFilter (for DVFs)" URL="\ref rtk::CyclicDeformationImageFilter"];
+   * 
+   * Input0 -> WarpSequenceForward;
+   * Input1 -> CyclicDeformation;
+   * CyclicDeformation -> WarpSequenceForward;
+   * ConstantSource -> ConjugateGradient;
    * WarpSequenceForward -> ConjugateGradient;
    * ConjugateGradient -> Output;
-   *
    * }
    * \enddot
    *
@@ -70,12 +69,12 @@ namespace rtk
    */
 
   template< typename TImageSequence,
-            typename TMVFImageSequence = itk::Image< itk::CovariantVector < typename TImageSequence::ValueType,
+            typename TDVFImageSequence = itk::Image< itk::CovariantVector < typename TImageSequence::ValueType,
                                                                             TImageSequence::ImageDimension-1 >,
                                                      TImageSequence::ImageDimension >,
             typename TImage = itk::Image< typename TImageSequence::ValueType,
                                           TImageSequence::ImageDimension-1 >,
-            typename TMVFImage = itk::Image<itk::CovariantVector < typename TImageSequence::ValueType,
+            typename TDVFImage = itk::Image<itk::CovariantVector < typename TImageSequence::ValueType,
                                                                    TImageSequence::ImageDimension - 1 >,
                                             TImageSequence::ImageDimension - 1> >
 class UnwarpSequenceImageFilter : public itk::ImageToImageFilter<TImageSequence, TImageSequence>
@@ -92,22 +91,23 @@ public:
     /** Run-time type information (and related methods). */
     itkTypeMacro(UnwarpSequenceImageFilter, ImageToImageFilter)
 
-    typedef itk::MultiplyImageFilter<TImageSequence>                          MultiplySequenceFilterType;
     typedef rtk::UnwarpSequenceConjugateGradientOperator<TImageSequence,
-                                                         TMVFImageSequence,
+                                                         TDVFImageSequence,
                                                          TImage,
-                                                         TMVFImage>           CGOperatorFilterType;
+                                                         TDVFImage>           CGOperatorFilterType;
     typedef rtk::WarpSequenceImageFilter< TImageSequence,
-                                          TMVFImageSequence,
+                                          TDVFImageSequence,
                                           TImage,
-                                          TMVFImage>                          WarpForwardFilterType;
+                                          TDVFImage>                          WarpForwardFilterType;
     typedef rtk::ConjugateGradientImageFilter<TImageSequence>                 ConjugateGradientFilterType;
+//     typedef rtk::CyclicDeformationImageFilter<TDVFImage>                      DVFInterpolatorType;
+    typedef rtk::ConstantImageSource<TImageSequence>                          ConstantSourceType;
 
     /** Set the motion vector field used in input 1 */
-    void SetDisplacementField(const TMVFImageSequence* MVFs);
+    void SetDisplacementField(const TDVFImageSequence* DVFs);
 
     /** Get the motion vector field used in input 1 */
-    typename TMVFImageSequence::Pointer GetDisplacementField();
+    typename TDVFImageSequence::Pointer GetDisplacementField();
 
     /** Number of conjugate gradient iterations */
     itkSetMacro(NumberOfIterations, float)
@@ -117,18 +117,28 @@ public:
     itkSetMacro(PhaseShift, float)
     itkGetMacro(PhaseShift, float)
 
+    itkSetMacro(UseNearestNeighborInterpolationInWarping, bool)
+    itkGetMacro(UseNearestNeighborInterpolationInWarping, bool)
+
+    itkSetMacro(CudaConjugateGradient, bool)
+    itkGetMacro(CudaConjugateGradient, bool)
+
+    /** Set and Get for the UseCudaCyclicDeformation variable */
+    itkSetMacro(UseCudaCyclicDeformation, bool)
+    itkGetMacro(UseCudaCyclicDeformation, bool)
+
 protected:
     UnwarpSequenceImageFilter();
-    ~UnwarpSequenceImageFilter(){}
+    ~UnwarpSequenceImageFilter() {}
 
     /** Does the real work. */
-    virtual void GenerateData();
+    void GenerateData() ITK_OVERRIDE;
 
     /** Member pointers to the filters used internally (for convenience)*/
-    typename MultiplySequenceFilterType::Pointer                    m_ZeroMultiplySequenceFilter;
     typename ConjugateGradientFilterType::Pointer                   m_ConjugateGradientFilter;
     typename CGOperatorFilterType::Pointer                          m_CGOperator;
     typename WarpForwardFilterType::Pointer                         m_WarpForwardFilter;
+    typename ConstantSourceType::Pointer                            m_ConstantSource;
 
     /** Member variables */
     float m_PhaseShift;
@@ -136,12 +146,16 @@ protected:
     /** The inputs of this filter have the same type (float, 3) but not the same meaning
     * It is normal that they do not occupy the same physical space. Therefore this check
     * must be removed */
-    void VerifyInputInformation(){}
+    void VerifyInputInformation() ITK_OVERRIDE {}
 
     /** The volume and the projections must have different requested regions
     */
-    void GenerateInputRequestedRegion();
-    void GenerateOutputInformation();
+    void GenerateInputRequestedRegion() ITK_OVERRIDE;
+    void GenerateOutputInformation() ITK_OVERRIDE;
+
+    bool m_UseNearestNeighborInterpolationInWarping; //Default is false, linear interpolation is used instead
+    bool m_CudaConjugateGradient;
+    bool m_UseCudaCyclicDeformation;
 
 private:
     UnwarpSequenceImageFilter(const Self &); //purposely not implemented
@@ -153,7 +167,7 @@ private:
 
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "rtkUnwarpSequenceImageFilter.txx"
+#include "rtkUnwarpSequenceImageFilter.hxx"
 #endif
 
 #endif

@@ -16,8 +16,8 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkEdfRawToAttenuationImageFilter_h
-#define __rtkEdfRawToAttenuationImageFilter_h
+#ifndef rtkEdfRawToAttenuationImageFilter_h
+#define rtkEdfRawToAttenuationImageFilter_h
 
 #include <itkImageToImageFilter.h>
 #include <itkImageSeriesReader.h>
@@ -34,7 +34,11 @@ namespace rtk
  */
 
 template<class TInputImage, class TOutputImage=TInputImage>
+#if ITK_VERSION_MAJOR > 4 || (ITK_VERSION_MAJOR == 4 && ITK_VERSION_MINOR > 4)
+class ITKIOImageBase_HIDDEN EdfRawToAttenuationImageFilter :
+#else
 class ITK_EXPORT EdfRawToAttenuationImageFilter :
+#endif
   public itk::ImageToImageFilter<TInputImage, TOutputImage>
 {
 public:
@@ -75,12 +79,11 @@ public:
 
 protected:
   EdfRawToAttenuationImageFilter();
-  ~EdfRawToAttenuationImageFilter(){
-  }
+  ~EdfRawToAttenuationImageFilter() {}
 
-  void BeforeThreadedGenerateData();
+  void BeforeThreadedGenerateData() ITK_OVERRIDE;
 
-  virtual void ThreadedGenerateData( const OutputImageRegionType& outputRegionForThread, ThreadIdType threadId );
+  void ThreadedGenerateData( const OutputImageRegionType& outputRegionForThread, ThreadIdType threadId ) ITK_OVERRIDE;
 
 private:
   //purposely not implemented
@@ -101,7 +104,7 @@ private:
 } // end namespace rtk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "rtkEdfRawToAttenuationImageFilter.txx"
+#include "rtkEdfRawToAttenuationImageFilter.hxx"
 #endif
 
 #endif

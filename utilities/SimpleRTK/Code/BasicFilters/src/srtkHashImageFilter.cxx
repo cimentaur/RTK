@@ -17,6 +17,10 @@
  *=========================================================================*/
 #include "srtkHashImageFilter.h"
 #include "srtkCastImageFilter.h"
+#include "rtkConfiguration.h"
+#ifdef RTK_USE_CUDA
+# include "itkCudaImage.h"
+#endif
 #include "itkHashImageFilter.h"
 #include "itkVectorImage.h"
 #include "itkLabelMap.h"
@@ -32,16 +36,18 @@ namespace rtk {
 
       this->m_MemberFactory.reset( new detail::MemberFunctionFactory<MemberFunctionType>( this ) );
 
+      this->m_MemberFactory->RegisterMemberFunctions< PixelIDTypeList, 4 > ();
       this->m_MemberFactory->RegisterMemberFunctions< PixelIDTypeList, 3 > ();
       this->m_MemberFactory->RegisterMemberFunctions< PixelIDTypeList, 2 > ();
 
+      this->m_MemberFactory->RegisterMemberFunctions < LabelPixelIDTypeList, 4, detail::ExecuteInternalLabelImageAddressor<MemberFunctionType> > ();
       this->m_MemberFactory->RegisterMemberFunctions < LabelPixelIDTypeList, 3, detail::ExecuteInternalLabelImageAddressor<MemberFunctionType> > ();
       this->m_MemberFactory->RegisterMemberFunctions < LabelPixelIDTypeList, 2, detail::ExecuteInternalLabelImageAddressor<MemberFunctionType> > ();
     }
 
     std::string HashImageFilter::ToString() const {
       std::ostringstream out;
-      out << "itk::simple::HashImageFilter\n";
+      out << "itk::simple::HashImageFilter" << std::endl;
       out << "HashFunction: ";
       switch ( this->m_HashFunction )
         {
@@ -52,7 +58,8 @@ namespace rtk {
           out << "MD5";
           break;
         }
-      out << "\n";
+      out << std::endl;
+      out << ProcessObject::ToString();
       return out.str();
     }
 
@@ -80,7 +87,11 @@ namespace rtk {
     {
       typedef TLabelImageType LabelImageType;
 
-      typedef itk::Image< typename LabelImageType::PixelType, LabelImageType::ImageDimension > ScalarImageType;
+#ifdef RTK_USE_CUDA
+      typedef itk::CudaImage< typename LabelImageType::PixelType, LabelImageType::ImageDimension > ScalarImageType;
+#else
+      typedef itk::Image< typename LabelImageType::PixelType, LabelImageType::ImageDimension >     ScalarImageType;
+#endif
 
       // The image id for a scalar image of the label map image
       PixelIDValueEnum scalarID = static_cast<PixelIDValueEnum>(PixelIDToPixelIDValue< typename ImageTypeToPixelID<ScalarImageType>::PixelIDType >::Result);

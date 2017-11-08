@@ -121,6 +121,14 @@ CudaForwardWarpImageFilter
     fIndexInputToPPInputMatrix[j] = (float) indexInputToPPInputMatrix[j/4][j%4];
     }
 
+  bool isLinear;
+  if (std::string("LinearInterpolateImageFunction").compare(this->GetInterpolator()->GetNameOfClass()) == 0)
+    isLinear = true;
+  else if (std::string("NearestNeighborInterpolateImageFunction").compare(this->GetInterpolator()->GetNameOfClass()) == 0)
+    isLinear = false;
+  else
+    itkGenericExceptionMacro(<< "In rtkCudaForwardWarpImageFilter: unknown interpolator");
+
   // Run on GPU
   CUDA_ForwardWarp(
     inputVolumeSize,
@@ -133,13 +141,14 @@ CudaForwardWarpImageFilter
     pinxDVF,
     pinyDVF,
     pinzDVF,
-    poutVol
+    poutVol,
+    isLinear
     );
 
   // Get rid of the intermediate images used to split the DVF into three components
-  xCompDVF = NULL;
-  yCompDVF = NULL;
-  zCompDVF = NULL;
+  xCompDVF = ITK_NULLPTR;
+  yCompDVF = ITK_NULLPTR;
+  zCompDVF = ITK_NULLPTR;
 
   // The filter is inPlace
 //  pinVol = poutVol;

@@ -79,7 +79,7 @@ int main(int argc, char * argv[])
     phaseGating->SetGatingWindowShape(args_info.windowshape_arg);
     phaseGating->SetInputProjectionStack(projectionsReader->GetOutput());
     phaseGating->SetInputGeometry(geometryReader->GetOutputObject());
-    phaseGating->Update();
+    TRY_AND_EXIT_ON_ITK_EXCEPTION( phaseGating->Update() )
     }
 
   // Create input: either an existing volume read from a file or a blank image
@@ -133,29 +133,16 @@ int main(int argc, char * argv[])
     admmFilter->SetInput(1, projectionsReader->GetOutput() );
     admmFilter->SetGeometry( geometryReader->GetOutputObject() );
     }
-
-  itk::TimeProbe totalTimeProbe;
-  if(args_info.time_flag)
-    {
-    std::cout << "Starting global probes before updating the ADMM filter" << std::endl;
-    totalTimeProbe.Start();
-    }
+  admmFilter->SetDisableDisplacedDetectorFilter(args_info.nodisplaced_flag);
 
   TRY_AND_EXIT_ON_ITK_EXCEPTION( admmFilter->Update() )
-
-  if(args_info.time_flag)
-    {
-    admmFilter->PrintTiming(std::cout);
-    totalTimeProbe.Stop();
-    std::cout << "It took...  " << totalTimeProbe.GetMean() << ' ' << totalTimeProbe.GetUnit() << std::endl;
-    }
 
   // Set writer and write the output
   typedef itk::ImageFileWriter<  OutputImageType > WriterType;
   WriterType::Pointer writer = WriterType::New();
   writer->SetFileName( args_info.output_arg );
   writer->SetInput( admmFilter->GetOutput() );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() );
+  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
 
   return EXIT_SUCCESS;
 }

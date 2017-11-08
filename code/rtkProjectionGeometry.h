@@ -16,12 +16,14 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkProjectionGeometry_h
-#define __rtkProjectionGeometry_h
+#ifndef rtkProjectionGeometry_h
+#define rtkProjectionGeometry_h
 
 #include <itkImageBase.h>
 
 #include <vector>
+
+#include "rtkMacro.h"
 
 namespace rtk
 {
@@ -67,11 +69,14 @@ public:
     return this->m_Matrices;
   }
 
+  /** Empty the geometry object. */
+  virtual void Clear();
+
 protected:
   ProjectionGeometry(){};
-  virtual ~ProjectionGeometry(){};
+  ~ProjectionGeometry() {}
 
-  virtual void PrintSelf( std::ostream& os, itk::Indent indent ) const;
+  void PrintSelf( std::ostream& os, itk::Indent indent ) const ITK_OVERRIDE;
 
   /** Add projection matrix */
   virtual void AddMatrix(const MatrixType &m){
@@ -88,6 +93,6 @@ private:
 };
 }
 
-#include "rtkProjectionGeometry.txx"
+#include "rtkProjectionGeometry.hxx"
 
-#endif // __rtkProjectionGeometry_h
+#endif // rtkProjectionGeometry_h

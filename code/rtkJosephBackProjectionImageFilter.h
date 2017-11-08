@@ -16,8 +16,8 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkJosephBackProjectionImageFilter_h
-#define __rtkJosephBackProjectionImageFilter_h
+#ifndef rtkJosephBackProjectionImageFilter_h
+#define rtkJosephBackProjectionImageFilter_h
 
 #include "rtkConfiguration.h"
 #include "rtkBackProjectionImageFilter.h"
@@ -117,13 +117,13 @@ public:
 
 protected:
   JosephBackProjectionImageFilter() {}
-  virtual ~JosephBackProjectionImageFilter() {}
+  ~JosephBackProjectionImageFilter() {}
 
-  virtual void GenerateData();
+  void GenerateData() ITK_OVERRIDE;
 
   /** The two inputs should not be in the same space so there is nothing
    * to verify. */
-  virtual void VerifyInputInformation() {}
+  void VerifyInputInformation() ITK_OVERRIDE {}
 
   inline void BilinearSplat(const InputPixelType rayValue,
                             const double stepLengthInVoxel,
@@ -165,7 +165,7 @@ private:
 } // end namespace rtk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "rtkJosephBackProjectionImageFilter.txx"
+#include "rtkJosephBackProjectionImageFilter.hxx"
 #endif
 
 #endif

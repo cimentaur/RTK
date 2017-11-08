@@ -16,8 +16,8 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkCudaFFTConvolutionImageFilter_h
-#define __rtkCudaFFTConvolutionImageFilter_h
+#ifndef rtkCudaFFTConvolutionImageFilter_h
+#define rtkCudaFFTConvolutionImageFilter_h
 
 #include <itkCudaImage.h>
 #include <itkCudaImageToImageFilter.h>
@@ -76,12 +76,13 @@ private:
   CudaFFTConvolutionImageFilter(const Self&); // purposely not implemented
   void operator=(const Self&);                // purposely not implemented
 
+  CudaFFTOutputImagePointer m_KernelFFTCUDA;
 }; // end of class
 
 } // end namespace rtk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "rtkCudaFFTConvolutionImageFilter.txx"
+#include "rtkCudaFFTConvolutionImageFilter.hxx"
 #endif
 
 #endif

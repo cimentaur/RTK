@@ -23,6 +23,9 @@
 // Varian Obi includes
 #include "rtkHndImageIOFactory.h"
 
+// Varian ProBeam includes
+#include "rtkXimImageIOFactory.h"
+
 // Elekta Synergy includes
 #include "rtkHisImageIOFactory.h"
 
@@ -35,6 +38,9 @@
 
 // Xrad small animal scanner
 #include "rtkXRadImageIOFactory.h"
+
+// Ora / medPhoton file format
+#include "rtkOraImageIOFactory.h"
 
 namespace rtk
 {
@@ -49,11 +55,13 @@ void RegisterIOFactories()
     itk::GDCMImageIOFactory::UnRegisterFactory(*it);
     }
   rtk::HndImageIOFactory::RegisterOneFactory();
+  rtk::XimImageIOFactory::RegisterOneFactory();
   rtk::HisImageIOFactory::RegisterOneFactory();
   rtk::ImagXImageIOFactory::RegisterOneFactory();
   rtk::DCMImagXImageIOFactory::RegisterOneFactory();
   rtk::EdfImageIOFactory::RegisterOneFactory();
   rtk::XRadImageIOFactory::RegisterOneFactory();
+  rtk::OraImageIOFactory::RegisterOneFactory();
   itk::GDCMImageIOFactory::RegisterOneFactory();
 }
 

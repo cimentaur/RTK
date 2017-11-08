@@ -16,8 +16,8 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkRayBoxIntersectionFunction_h
-#define __rtkRayBoxIntersectionFunction_h
+#ifndef rtkRayBoxIntersectionFunction_h
+#define rtkRayBoxIntersectionFunction_h
 
 #include <itkNumericTraits.h>
 #include <vector>
@@ -121,7 +121,7 @@ protected:
   RayBoxIntersectionFunction();
 
   /// Destructor
-  ~RayBoxIntersectionFunction(){};
+  ~RayBoxIntersectionFunction() {}
 
   /// The focal point or position of the ray source
   VectorType m_FocalPoint;
@@ -142,7 +142,7 @@ private:
 } // namespace rtk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "rtkRayBoxIntersectionFunction.txx"
+#include "rtkRayBoxIntersectionFunction.hxx"
 #endif
 
 #endif

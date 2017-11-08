@@ -16,8 +16,8 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkAmsterdamShroudImageFilter_h
-#define __rtkAmsterdamShroudImageFilter_h
+#ifndef rtkAmsterdamShroudImageFilter_h
+#define rtkAmsterdamShroudImageFilter_h
 
 #include <itkImageToImageFilter.h>
 #include <itkRecursiveGaussianImageFilter.h>
@@ -27,6 +27,8 @@
 #include <itkConvolutionImageFilter.h>
 #include <itkSubtractImageFilter.h>
 #include <itkPermuteAxesImageFilter.h>
+#include <itkCropImageFilter.h>
+#include "rtkThreeDCircularProjectionGeometry.h"
 
 namespace rtk
 {
@@ -81,11 +83,17 @@ class ITK_EXPORT AmsterdamShroudImageFilter :
 {
 public:
   /** Standard class typedefs. */
-  typedef itk::Image<double, TInputImage::ImageDimension-1>     TOutputImage;
-  typedef AmsterdamShroudImageFilter                            Self;
-  typedef itk::ImageToImageFilter<TInputImage, TOutputImage>    Superclass;
-  typedef itk::SmartPointer<Self>                               Pointer;
-  typedef itk::SmartPointer<const Self>                         ConstPointer;
+  typedef AmsterdamShroudImageFilter                                                  Self;
+  typedef itk::ImageToImageFilter<TInputImage,
+                                  itk::Image<double, TInputImage::ImageDimension-1> > Superclass;
+  typedef itk::SmartPointer<Self>                                                     Pointer;
+  typedef itk::SmartPointer<const Self>                                               ConstPointer;
+
+  /** Convenient typedefs. */
+  typedef itk::Image<double, TInputImage::ImageDimension-1> TOutputImage;
+  typedef itk::Point<double, 3>                             PointType;
+  typedef rtk::ThreeDCircularProjectionGeometry             GeometryType;
+  typedef typename GeometryType::Pointer                    GeometryPointer;
 
   /** ImageDimension constants */
   itkStaticConstMacro(InputImageDimension, unsigned int,
@@ -106,19 +114,35 @@ public:
   itkGetMacro(UnsharpMaskSize, unsigned int);
   itkSetMacro(UnsharpMaskSize, unsigned int);
 
+  /** Get / Set the object pointer to projection geometry */
+  itkGetMacro(Geometry, GeometryPointer);
+  itkSetMacro(Geometry, GeometryPointer);
+
+  /** 3D clipbox corners for selecting part of the projections. Each corner is
+   * projected and rounded to the nearest 2D pixel and only those pixels within
+   * the two pixels are kept. */
+  itkGetMacro(Corner1, PointType);
+  itkSetMacro(Corner1, PointType);
+  itkGetMacro(Corner2, PointType);
+  itkSetMacro(Corner2, PointType);
+
   /** Runtime information support. */
   itkTypeMacro(AmsterdamShroudImageFilter, itk::ImageToImageFilter);
 protected:
   AmsterdamShroudImageFilter();
-  ~AmsterdamShroudImageFilter(){}
+  ~AmsterdamShroudImageFilter() {}
 
-  void GenerateOutputInformation();
-  void GenerateInputRequestedRegion();
+  void GenerateOutputInformation() ITK_OVERRIDE;
+  void GenerateInputRequestedRegion() ITK_OVERRIDE;
   void UpdateUnsharpMaskKernel();
 
   /** Single-threaded version of GenerateData.  This filter delegates
    * to other filters. */
-  void GenerateData();
+  void GenerateData() ITK_OVERRIDE;
+
+  /** Function that actually projects the 3D box defined by m_Corner1 and
+   * m_Corner2 and set everything outside to 0. */
+  virtual void CropOutsideProjectedBox();
 
 private:
   AmsterdamShroudImageFilter(const Self&); //purposely not implemented
@@ -140,12 +164,15 @@ private:
   typename SubtractType::Pointer    m_SubtractFilter;
   typename PermuteType::Pointer     m_PermuteFilter;
   unsigned int                      m_UnsharpMaskSize;
+  GeometryPointer                   m_Geometry;
+  PointType                         m_Corner1;
+  PointType                         m_Corner2;
 }; // end of class
 
 } // end namespace rtk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "rtkAmsterdamShroudImageFilter.txx"
+#include "rtkAmsterdamShroudImageFilter.hxx"
 #endif
 
 #endif

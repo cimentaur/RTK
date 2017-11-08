@@ -16,8 +16,8 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkDeconstructSoftThresholdReconstructImageFilter_h
-#define __rtkDeconstructSoftThresholdReconstructImageFilter_h
+#ifndef rtkDeconstructSoftThresholdReconstructImageFilter_h
+#define rtkDeconstructSoftThresholdReconstructImageFilter_h
 
 //ITK includes
 #include "itkMacro.h"
@@ -32,7 +32,7 @@ namespace rtk {
 
 /**
  * \class DeconstructSoftThresholdReconstructImageFilter
- * \brief Deconstructs an image, soft thresholds it wavelets coefficients,
+ * \brief Deconstructs an image, soft thresholds its wavelets coefficients,
  * then reconstructs
  *
  * This filter is inspired from Dan Mueller's GIFT package
@@ -87,16 +87,16 @@ public:
 
 protected:
     DeconstructSoftThresholdReconstructImageFilter();
-    ~DeconstructSoftThresholdReconstructImageFilter(){}
-    void PrintSelf(std::ostream&os, itk::Indent indent) const;
+    ~DeconstructSoftThresholdReconstructImageFilter() {}
+    void PrintSelf(std::ostream&os, itk::Indent indent) const ITK_OVERRIDE;
 
     /** Generate the output data. */
-    virtual void GenerateData();
+    void GenerateData() ITK_OVERRIDE;
 
     /** Compute the information on output's size and index */
-    virtual void GenerateOutputInformation();
+    void GenerateOutputInformation() ITK_OVERRIDE;
 
-    virtual void GenerateInputRequestedRegion();
+    void GenerateInputRequestedRegion() ITK_OVERRIDE;
 
 private:
     DeconstructSoftThresholdReconstructImageFilter(const Self&);     //purposely not implemented
@@ -116,7 +116,7 @@ private:
 
 //Include CXX
 #ifndef rtk_MANUAL_INSTANTIATION
-#include "rtkDeconstructSoftThresholdReconstructImageFilter.txx"
+#include "rtkDeconstructSoftThresholdReconstructImageFilter.hxx"
 #endif
 
 #endif

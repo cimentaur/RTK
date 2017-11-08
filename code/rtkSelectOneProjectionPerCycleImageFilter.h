@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __rtkSelectOneProjectionPerCycleImageFilter_h
-#define __rtkSelectOneProjectionPerCycleImageFilter_h
+#ifndef rtkSelectOneProjectionPerCycleImageFilter_h
+#define rtkSelectOneProjectionPerCycleImageFilter_h
 
 #include "rtkSubSelectImageFilter.h"
 
@@ -50,7 +50,7 @@ public:
 
   /** File name of a text file with one phase value between 0 and 1 per line. */
   itkGetMacro(SignalFilename, std::string);
-  virtual void SetSignalFilename(const std::string _arg);
+  itkSetMacro(SignalFilename, std::string);
 
   /** Phase value for which we want the closest projection image per cycle. */
   itkSetMacro(Phase, double)
@@ -58,9 +58,9 @@ public:
 
 protected:
   SelectOneProjectionPerCycleImageFilter();
-  ~SelectOneProjectionPerCycleImageFilter(){}
+  ~SelectOneProjectionPerCycleImageFilter() {}
 
-  virtual void GenerateOutputInformation();
+  void GenerateOutputInformation() ITK_OVERRIDE;
 
 private:
   SelectOneProjectionPerCycleImageFilter(const Self &); //purposely not implemented
@@ -74,7 +74,7 @@ private:
 
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "rtkSelectOneProjectionPerCycleImageFilter.txx"
+#include "rtkSelectOneProjectionPerCycleImageFilter.hxx"
 #endif
 
 #endif

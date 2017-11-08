@@ -67,13 +67,20 @@ public:
   const std::vector<double> &GetOutOfPlaneAngles() const;
   const std::vector<double> &GetInPlaneAngles() const;
   const std::vector<double> &GetSourceAngles() const;
-  const std::vector<double> &GetTiltAngles() const;
+  const std::vector<double>  GetTiltAngles() const;
   const std::vector<double> &GetSourceToIsocenterDistances() const;
   const std::vector<double> &GetSourceOffsetsX() const;
   const std::vector<double> &GetSourceOffsetsY() const;
   const std::vector<double> &GetSourceToDetectorDistances() const;
   const std::vector<double> &GetProjectionOffsetsX() const;
   const std::vector<double> &GetProjectionOffsetsY() const;
+  const std::vector<double>  GetSourcePosition( const unsigned int i ) const;
+  const std::vector<double>  GetRotationMatrix( const unsigned int i) const;
+  const std::vector<double>  GetMatrix( const unsigned int i) const;
+  const std::vector<double>  GetProjectionCoordinatesToFixedSystemMatrix( const unsigned int i) const;
+
+  const double GetRadiusCylindricalDetector();
+  void SetRadiusCylindricalDetector(const double radius);
 
   /** Add the projection with angles in degress
    * @{
@@ -85,6 +92,18 @@ public:
    * @{
    */
   void AddProjectionInRadians(float sid, float sdd, float angle, float isox=0., float isoy=0., float oa=0., float ia=0., float sx=0., float sy=0.);
+  /**@}*/
+
+  /** Add the projection with projection matrix 
+   * @{
+   */
+  void AddProjection(const std::vector<double> matrix);
+  /**@}*/
+
+  /** Add the projection with source and detector positions and orientations 
+   * @{
+   */
+  void AddProjection(const std::vector<double> sourcePosition, const std::vector<double> detectorPosition, const std::vector<double> detectorRowVector, const std::vector<double> detectorColumnVector);
   /**@}*/
 
   /** Clear the geometry object

@@ -16,8 +16,8 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkHilbertImageFilter_h
-#define __rtkHilbertImageFilter_h
+#ifndef rtkHilbertImageFilter_h
+#define rtkHilbertImageFilter_h
 
 #include <itkImageToImageFilter.h>
 
@@ -59,9 +59,9 @@ public:
 
 protected:
   HilbertImageFilter(){}
-  ~HilbertImageFilter(){}
+  ~HilbertImageFilter() {}
 
-  void GenerateData();
+  void GenerateData() ITK_OVERRIDE;
 
 private:
   HilbertImageFilter(const Self&);  //purposely not implemented
@@ -71,7 +71,7 @@ private:
 } // end of namespace rtk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "rtkHilbertImageFilter.txx"
+#include "rtkHilbertImageFilter.hxx"
 #endif
 
 #endif

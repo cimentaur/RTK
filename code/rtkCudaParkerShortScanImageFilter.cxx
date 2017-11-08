@@ -78,16 +78,11 @@ CudaParkerShortScanImageFilter
   const std::map<double,unsigned int> sortedAngles = this->GetGeometry()->GetUniqueSortedAngles( rotationAngles );
 
   // Compute delta between first and last angle where there is weighting required
-  // First angle
-  std::map<double,unsigned int>::const_iterator itFirstAngle;
-  itFirstAngle = sortedAngles.find(rotationAngles[maxAngularGapPos]);
-  itFirstAngle = (++itFirstAngle == sortedAngles.end()) ? sortedAngles.begin() : itFirstAngle;
-  itFirstAngle = (++itFirstAngle == sortedAngles.end()) ? sortedAngles.begin() : itFirstAngle;
-  const double firstAngle = itFirstAngle->first;
-  // Last angle
   std::map<double,unsigned int>::const_iterator itLastAngle;
   itLastAngle = sortedAngles.find(rotationAngles[maxAngularGapPos]);
-  itLastAngle = (itLastAngle == sortedAngles.begin()) ? --sortedAngles.end() : --itLastAngle;
+  std::map<double,unsigned int>::const_iterator itFirstAngle = itLastAngle;
+  itFirstAngle = (++itFirstAngle==sortedAngles.end())?sortedAngles.begin():itFirstAngle;
+  const double firstAngle = itFirstAngle->first;
   double lastAngle = itLastAngle->first;
   if (lastAngle < firstAngle)
     lastAngle += 2*vnl_math::pi;
@@ -138,7 +133,7 @@ CudaParkerShortScanImageFilter
   // 2: gantry angle
   int geomIdx = this->GetInput()->GetRequestedRegion().GetIndex()[2];
   float *geomMatrix = new float[proj_size[2] * 5];
-  if(geomMatrix == NULL)
+  if(geomMatrix == ITK_NULLPTR)
      itkExceptionMacro(<< "Couldn't allocate geomMatrix");
   for (int g = 0; g < proj_size[2]; ++g)
     {

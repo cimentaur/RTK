@@ -16,8 +16,8 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkThreeDCircularProjectionGeometryXMLFile_h
-#define __rtkThreeDCircularProjectionGeometryXMLFile_h
+#ifndef rtkThreeDCircularProjectionGeometryXMLFile_h
+#define rtkThreeDCircularProjectionGeometryXMLFile_h
 
 #ifdef _MSC_VER
 #pragma warning ( disable : 4786 )
@@ -55,7 +55,7 @@ public:
   typedef GeometryType::Pointer            GeometryPointer;
 
   /** Latest version */
-  static const unsigned int CurrentVersion = 2;
+  static const unsigned int CurrentVersion = 3;
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(ThreeDCircularProjectionGeometryXMLFileReader, itk::XMLFileReader);
@@ -64,25 +64,25 @@ public:
   itkNewMacro(Self);
 
   /** Determine if a file can be read */
-  int CanReadFile(const char* name);
+  int CanReadFile(const char* name) ITK_OVERRIDE;
 
   /** Get smart pointer to projection geometry. */
   itkGetMacro(Geometry, GeometryPointer);
 
 protected:
   ThreeDCircularProjectionGeometryXMLFileReader();
-  ~ThreeDCircularProjectionGeometryXMLFileReader() { };
+  ~ThreeDCircularProjectionGeometryXMLFileReader() {}
 
   /** Callback function -- called from XML parser with start-of-element
    * information.
    */
-  void StartElement(const char * name,const char **atts);
+  void StartElement(const char * name,const char **atts) ITK_OVERRIDE;
 
   void StartElement(const char * name);
 
-  void EndElement(const char *name);
+  void EndElement(const char *name) ITK_OVERRIDE;
 
-  void CharacterDataHandler(const char *inData, int inLength);
+  void CharacterDataHandler(const char *inData, int inLength) ITK_OVERRIDE;
 
 private:
    //purposely not implemented
@@ -103,6 +103,10 @@ private:
   double m_SourceToDetectorDistance;
   double m_ProjectionOffsetX;
   double m_ProjectionOffsetY;
+  double m_CollimationUInf;
+  double m_CollimationUSup;
+  double m_CollimationVInf;
+  double m_CollimationVSup;
 
   /** Projection matrix */
   ThreeDCircularProjectionGeometry::MatrixType m_Matrix;
@@ -135,14 +139,14 @@ public:
   itkTypeMacro(ThreeDCircularProjectionGeometryXMLFileWriter, itk::XMLFileWriter);
 
   /** Test whether a file is writable. */
-  int CanWriteFile(const char* name);
+  int CanWriteFile(const char* name) ITK_OVERRIDE;
 
   /** Actually write out the file in question */
-  int WriteFile();
+  int WriteFile() ITK_OVERRIDE;
 
 protected:
   ThreeDCircularProjectionGeometryXMLFileWriter() {};
-  ~ThreeDCircularProjectionGeometryXMLFileWriter() {};
+  ~ThreeDCircularProjectionGeometryXMLFileWriter() {}
   
   /** If all values are equal in v, write first value (if not 0.) in
       output file with parameter value s and return true. Return false
@@ -150,7 +154,8 @@ protected:
    */
   bool WriteGlobalParameter(std::ofstream &output, const std::string &indent,
                             const std::vector<double> &v, const std::string &s,
-                            bool convertToDegrees=false);
+                            bool convertToDegrees=false,
+                            double defval=0.);
 
   /** Write projection specific parameter with name s. */
   void WriteLocalParameter(std::ofstream &output, const std::string &indent,

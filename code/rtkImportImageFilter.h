@@ -16,10 +16,11 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkImportImageFilter_h
-#define __rtkImportImageFilter_h
+#ifndef rtkImportImageFilter_h
+#define rtkImportImageFilter_h
 
 #include "itkImageSource.h"
+#include "rtkMacro.h"
 
 namespace rtk
 {
@@ -30,7 +31,9 @@ namespace rtk
  * ImportImageFilter is an image source, so it behaves like any other pipeline
  * object.
  *
- * This class is templated over the image type of the output image.
+ * This class is templated over the image type of the output image, unlike
+ * itk::ImportImageFilter which is templated over the pixel type and the dimension
+ * and is therefore incompatible with itk::CudaImage.
  *
  * \author Marc Vila
  **/
@@ -122,16 +125,16 @@ public:
 protected:
   ImportImageFilter();
   ~ImportImageFilter();
-  void PrintSelf(std::ostream & os, itk::Indent indent) const;
+  void PrintSelf(std::ostream & os, itk::Indent indent) const ITK_OVERRIDE;
 
   /** This filter does not actually "produce" any data, rather it "wraps"
    * the user supplied data into an itk::Image.  */
-  virtual void GenerateData();
+  void GenerateData() ITK_OVERRIDE;
 
   /** This is a source, so it must set the spacing, size, and largest possible
    * region for the output image that it will produce.
    * \sa ProcessObject::GenerateOutputInformation() */
-  virtual void GenerateOutputInformation();
+  void GenerateOutputInformation() ITK_OVERRIDE;
 
   /** This filter can only produce the amount of data that it is given,
    * so we must override ProcessObject::EnlargeOutputRequestedRegion()
@@ -140,7 +143,7 @@ protected:
    * given.)
    *
    * \sa ProcessObject::EnlargeOutputRequestedRegion() */
-  virtual void EnlargeOutputRequestedRegion(itk::DataObject *output);
+  void EnlargeOutputRequestedRegion(itk::DataObject *output) ITK_OVERRIDE;
 
 private:
   ImportImageFilter(const ImportImageFilter &); //purposely not implemented
@@ -158,7 +161,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "rtkImportImageFilter.txx"
+#include "rtkImportImageFilter.hxx"
 #endif
 
 #endif

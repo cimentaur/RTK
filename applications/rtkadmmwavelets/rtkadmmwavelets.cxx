@@ -116,29 +116,17 @@ int main(int argc, char * argv[])
   // Set the inputs of the ADMM filter
   admmFilter->SetInput(0, inputFilter->GetOutput() );
   admmFilter->SetInput(1, projectionsReader->GetOutput() );
-
-  itk::TimeProbe totalTimeProbe;
-  if(args_info.time_flag)
-    {
-    std::cout << "Recording elapsed time... " << std::endl << std::flush;
-    totalTimeProbe.Start();
-    }
+  
+  admmFilter->SetDisableDisplacedDetectorFilter(args_info.nodisplaced_flag);
 
   TRY_AND_EXIT_ON_ITK_EXCEPTION( admmFilter->Update() )
-
-  if(args_info.time_flag)
-    {
-    admmFilter->PrintTiming(std::cout);
-    totalTimeProbe.Stop();
-    std::cout << "It took...  " << totalTimeProbe.GetMean() << ' ' << totalTimeProbe.GetUnit() << std::endl;
-    }
 
   // Set writer and write the output
   typedef itk::ImageFileWriter<  OutputImageType > WriterType;
   WriterType::Pointer writer = WriterType::New();
   writer->SetFileName( args_info.output_arg );
   writer->SetInput( admmFilter->GetOutput() );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() );
+  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
 
   return EXIT_SUCCESS;
 }

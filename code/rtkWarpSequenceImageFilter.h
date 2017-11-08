@@ -16,22 +16,24 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkWarpSequenceImageFilter_h
-#define __rtkWarpSequenceImageFilter_h
+#ifndef rtkWarpSequenceImageFilter_h
+#define rtkWarpSequenceImageFilter_h
 
 #include "rtkConstantImageSource.h"
-#include "rtkCyclicDeformationImageFilter.h"
 
 #include <itkExtractImageFilter.h>
 #include <itkPasteImageFilter.h>
 #include <itkCastImageFilter.h>
+#include <itkNearestNeighborInterpolateImageFunction.h>
 
 #ifdef RTK_USE_CUDA
   #include "rtkCudaWarpImageFilter.h"
   #include "rtkCudaForwardWarpImageFilter.h"
+  #include "rtkCudaCyclicDeformationImageFilter.h"
 #else
   #include <itkWarpImageFilter.h>
   #include "rtkForwardWarpImageFilter.h"
+  #include "rtkCyclicDeformationImageFilter.h"
 #endif
 
 namespace rtk
@@ -47,14 +49,14 @@ namespace rtk
    *
    * Input0 [ label="Input 0 (Sequence of images)"];
    * Input0 [shape=Mdiamond];
-   * Input1 [label="Input 1 (Sequence of MVFs)"];
+   * Input1 [label="Input 1 (Sequence of DVFs)"];
    * Input1 [shape=Mdiamond];
    * Output [label="Output (Sequence of images)"];
    * Output [shape=Mdiamond];
    *
    * node [shape=box];
    * Extract [label="itk::ExtractImageFilter (for images)" URL="\ref itk::ExtractImageFilter"];
-   * CyclicDeformation [label="rtk::CyclicDeformationImageFilter (for MVFs)" URL="\ref rtk::CyclicDeformationImageFilter"];
+   * CyclicDeformation [label="rtk::CyclicDeformationImageFilter (for DVFs)" URL="\ref rtk::CyclicDeformationImageFilter"];
    * Warp [ label="itk::WarpImageFilter" URL="\ref itk::WarpImageFilter"];
    * Cast [ label="itk::CastImageFilter" URL="\ref itk::CastImageFilter"];
    * Paste [ label="itk::PasteImageFilter" URL="\ref itk::PasteImageFilter"];
@@ -67,10 +69,11 @@ namespace rtk
    * Extract -> Warp;
    * CyclicDeformation -> Warp;
    * Warp -> Cast;
-   * Cast -> BeforePaste [arrowhead=none];
+   * Cast -> Paste;
+   * ConstantSource -> BeforePaste [arrowhead=none];
    * BeforePaste -> Paste;
    * Paste -> AfterPaste [arrowhead=none];
-   * AfterPaste -> BeforePaste [style=dashed];
+   * AfterPaste -> BeforePaste [style=dashed, constraint=false];
    * AfterPaste -> Output [style=dashed];
    * }
    * \enddot
@@ -83,12 +86,12 @@ namespace rtk
    */
 
 template< typename TImageSequence,
-          typename TMVFImageSequence = itk::Image< itk::CovariantVector < typename TImageSequence::ValueType,
+          typename TDVFImageSequence = itk::Image< itk::CovariantVector < typename TImageSequence::ValueType,
                                                                           TImageSequence::ImageDimension-1 >,
                                                    TImageSequence::ImageDimension >,
           typename TImage = itk::Image< typename TImageSequence::ValueType,
                                         TImageSequence::ImageDimension-1 >,
-          typename TMVFImage = itk::Image<itk::CovariantVector < typename TImageSequence::ValueType,
+          typename TDVFImage = itk::Image<itk::CovariantVector < typename TImageSequence::ValueType,
                                                                  TImageSequence::ImageDimension - 1 >,
                                           TImageSequence::ImageDimension - 1> >
 class WarpSequenceImageFilter : public itk::ImageToImageFilter<TImageSequence, TImageSequence>
@@ -106,10 +109,10 @@ public:
     itkTypeMacro(WarpSequenceImageFilter, IterativeConeBeamReconstructionFilter)
 
     /** Set the motion vector field used in input 1 */
-    void SetDisplacementField(const TMVFImageSequence* MVFs);
+    void SetDisplacementField(const TDVFImageSequence* DVFs);
 
     /** Get the motion vector field used in input 1 */
-    typename TMVFImageSequence::Pointer GetDisplacementField();
+    typename TDVFImageSequence::Pointer GetDisplacementField();
 
     /** Set/Get for m_ForwardWarp */
     itkGetMacro(ForwardWarp, bool)
@@ -119,32 +122,41 @@ public:
     itkSetMacro(PhaseShift, float)
     itkGetMacro(PhaseShift, float)
 
+    /** Information for the CUDA warp filter, to avoid using RTTI */
+    itkSetMacro(UseNearestNeighborInterpolationInWarping, bool)
+    itkGetMacro(UseNearestNeighborInterpolationInWarping, bool)
+
+    /** Set and Get for the UseCudaCyclicDeformation variable */
+    itkSetMacro(UseCudaCyclicDeformation, bool)
+    itkGetMacro(UseCudaCyclicDeformation, bool)
+
     /** Typedefs of internal filters */
 #ifdef RTK_USE_CUDA
-    typedef rtk::CudaWarpImageFilter                                CudaWarpFilterType;
-    typedef rtk::CudaForwardWarpImageFilter                         CudaForwardWarpFilterType;
+    typedef rtk::CudaWarpImageFilter                                          CudaWarpFilterType;
+    typedef rtk::CudaForwardWarpImageFilter                                   CudaForwardWarpFilterType;
 #endif
-    typedef itk::WarpImageFilter<TImage, TImage, TMVFImage>         WarpFilterType;
-    typedef rtk::ForwardWarpImageFilter<TImage, TImage, TMVFImage>  ForwardWarpFilterType;
+    typedef itk::WarpImageFilter<TImage, TImage, TDVFImage>                   WarpFilterType;
+    typedef rtk::ForwardWarpImageFilter<TImage, TImage, TDVFImage>            ForwardWarpFilterType;
 
-    typedef itk::LinearInterpolateImageFunction<TImage, double >    InterpolatorType;
-    typedef itk::ExtractImageFilter<TImageSequence, TImage>         ExtractFilterType;
-    typedef rtk::CyclicDeformationImageFilter<TMVFImage>            MVFInterpolatorType;
-    typedef itk::PasteImageFilter<TImageSequence,TImageSequence>    PasteFilterType;
-    typedef itk::CastImageFilter<TImage, TImageSequence>            CastFilterType;
-    typedef rtk::ConstantImageSource<TImageSequence>                ConstantImageSourceType;
+    typedef itk::LinearInterpolateImageFunction<TImage, double >              LinearInterpolatorType;
+    typedef itk::NearestNeighborInterpolateImageFunction<TImage, double >     NearestNeighborInterpolatorType;
+    typedef itk::ExtractImageFilter<TImageSequence, TImage>                   ExtractFilterType;
+    typedef rtk::CyclicDeformationImageFilter<TDVFImage>                      DVFInterpolatorType;
+    typedef itk::PasteImageFilter<TImageSequence,TImageSequence>              PasteFilterType;
+    typedef itk::CastImageFilter<TImage, TImageSequence>                      CastFilterType;
+    typedef rtk::ConstantImageSource<TImageSequence>                          ConstantImageSourceType;
 
 protected:
     WarpSequenceImageFilter();
-    ~WarpSequenceImageFilter(){}
+    ~WarpSequenceImageFilter() {}
 
     /** Does the real work. */
-    virtual void GenerateData();
+    void GenerateData() ITK_OVERRIDE;
 
     /** Member pointers to the filters used internally (for convenience)*/
     typename WarpFilterType::Pointer          m_WarpFilter;
     typename ExtractFilterType::Pointer       m_ExtractFilter;
-    typename MVFInterpolatorType::Pointer     m_MVFInterpolatorFilter;
+    typename DVFInterpolatorType::Pointer     m_DVFInterpolatorFilter;
     typename PasteFilterType::Pointer         m_PasteFilter;
     typename CastFilterType::Pointer          m_CastFilter;
     typename ConstantImageSourceType::Pointer m_ConstantSource;
@@ -159,12 +171,15 @@ protected:
     /** The inputs of this filter have the same type (float, 3) but not the same meaning
     * It is normal that they do not occupy the same physical space. Therefore this check
     * must be removed */
-    void VerifyInputInformation(){}
+    void VerifyInputInformation() ITK_OVERRIDE {}
 
     /** The volume and the projections must have different requested regions
     */
-    void GenerateOutputInformation();
-    void GenerateInputRequestedRegion();
+    void GenerateOutputInformation() ITK_OVERRIDE;
+    void GenerateInputRequestedRegion() ITK_OVERRIDE;
+
+    bool m_UseNearestNeighborInterpolationInWarping; //Default is false, linear interpolation is used instead
+    bool m_UseCudaCyclicDeformation;
 
 private:
     WarpSequenceImageFilter(const Self &); //purposely not implemented
@@ -174,7 +189,7 @@ private:
 
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "rtkWarpSequenceImageFilter.txx"
+#include "rtkWarpSequenceImageFilter.hxx"
 #endif
 
 #endif

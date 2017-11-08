@@ -16,11 +16,12 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkJosephForwardProjectionImageFilter_h
-#define __rtkJosephForwardProjectionImageFilter_h
+#ifndef rtkJosephForwardProjectionImageFilter_h
+#define rtkJosephForwardProjectionImageFilter_h
 
 #include "rtkConfiguration.h"
 #include "rtkForwardProjectionImageFilter.h"
+#include "rtkMacro.h"
 
 namespace rtk
 {
@@ -82,16 +83,17 @@ public:
     return !( *this != other );
     }
 
-  inline TOutput operator()( const ThreadIdType itkNotUsed(threadId),
-                             const TInput &input,
-                             const TOutput &rayCastValue,
-                             const VectorType &stepInMM,
-                             const VectorType &itkNotUsed(source),
-                             const VectorType &itkNotUsed(sourceToPixel),
-                             const VectorType &itkNotUsed(nearestPoint),
-                             const VectorType &itkNotUsed(farthestPoint)) const
+  inline void operator()( const ThreadIdType itkNotUsed(threadId),
+                          const TInput &input,
+                          TOutput &output,
+                          const TOutput &rayCastValue,
+                          const VectorType &stepInMM,
+                          const VectorType &itkNotUsed(source),
+                          const VectorType &itkNotUsed(sourceToPixel),
+                          const VectorType &itkNotUsed(nearestPoint),
+                          const VectorType &itkNotUsed(farthestPoint)) const
     {
-    return input + rayCastValue * stepInMM.GetNorm();
+    output = input + rayCastValue * stepInMM.GetNorm();
     }
 };
 
@@ -166,13 +168,13 @@ public:
 
 protected:
   JosephForwardProjectionImageFilter() {}
-  virtual ~JosephForwardProjectionImageFilter() {}
+  ~JosephForwardProjectionImageFilter() {}
 
-  virtual void ThreadedGenerateData( const OutputImageRegionType& outputRegionForThread, ThreadIdType threadId );
+  void ThreadedGenerateData( const OutputImageRegionType& outputRegionForThread, ThreadIdType threadId ) ITK_OVERRIDE;
 
   /** The two inputs should not be in the same space so there is nothing
    * to verify. */
-  virtual void VerifyInputInformation() {}
+  void VerifyInputInformation() ITK_OVERRIDE {}
 
   inline OutputPixelType BilinearInterpolation(const ThreadIdType threadId,
                                                const double stepLengthInVoxel,
@@ -211,7 +213,7 @@ private:
 } // end namespace rtk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "rtkJosephForwardProjectionImageFilter.txx"
+#include "rtkJosephForwardProjectionImageFilter.hxx"
 #endif
 
 #endif

@@ -16,8 +16,8 @@
  *
  *=========================================================================*/
 
-#ifndef __rtkSoftThresholdImageFilter_h
-#define __rtkSoftThresholdImageFilter_h
+#ifndef rtkSoftThresholdImageFilter_h
+#define rtkSoftThresholdImageFilter_h
 
 #include "itkUnaryFunctorImageFilter.h"
 #include "itkConceptChecking.h"
@@ -125,7 +125,7 @@ public:
 
 protected:
   SoftThresholdImageFilter();
-  virtual ~SoftThresholdImageFilter() {}
+  ~SoftThresholdImageFilter() {}
 
 private:
   SoftThresholdImageFilter(const Self&); //purposely not implemented
@@ -136,7 +136,7 @@ private:
 } // end namespace rtk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "rtkSoftThresholdImageFilter.txx"
+#include "rtkSoftThresholdImageFilter.hxx"
 #endif
 
 #endif

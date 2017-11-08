@@ -121,11 +121,6 @@ int main(int argc, char * argv[])
   typedef rtk::ConstantImageSource< OutputImageType > ConstantImageSourceType;
   ConstantImageSourceType::Pointer constantImageSource = ConstantImageSourceType::New();
   rtk::SetConstantImageSourceFromGgo<ConstantImageSourceType, args_info_rtkfourdfdk>(constantImageSource, args_info);
-
-  // GenGetOpt can't handle default arguments for multiple arguments like dimension or spacing.
-  // The only default it accepts is to set all components of a multiple argument to the same value.
-  // Default dimension is 256^4, ie the number of reconstructed instants is 256. It has to be set to a more reasonable value
-  // which is why a "frames" argument is introduced
   TRY_AND_EXIT_ON_ITK_EXCEPTION(constantImageSource->Update())
 
   // This macro sets options for fdk filter which I can not see how to do better
@@ -146,7 +141,7 @@ int main(int argc, char * argv[])
   typedef rtk::CudaFDKConeBeamReconstructionFilter FDKCUDAType;
   FDKCUDAType::Pointer feldkampCUDA;
 #endif
-  itk::Image< OutputPixelType, Dimension > *pfeldkamp = NULL;
+  itk::Image< OutputPixelType, Dimension > *pfeldkamp = ITK_NULLPTR;
   if(!strcmp(args_info.hardware_arg, "cpu") )
     {
     feldkamp = FDKCPUType::New();
@@ -168,7 +163,7 @@ int main(int argc, char * argv[])
   StreamerType::Pointer streamerBP = StreamerType::New();
   streamerBP->SetInput( pfeldkamp );
   streamerBP->SetNumberOfStreamDivisions( args_info.divisions_arg );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( streamerBP->UpdateOutputInformation() );
+  TRY_AND_EXIT_ON_ITK_EXCEPTION( streamerBP->UpdateOutputInformation() )
 
   // Create empty 4D image
   typedef itk::Image< OutputPixelType, Dimension+1 >       FourDOutputImageType;
@@ -183,6 +178,7 @@ int main(int argc, char * argv[])
   FourDConstantImageSourceType::SizeType fourDInputSize(fourDConstantImageSource->GetSize());
   fourDInputSize[3] = args_info.frames_arg;
   fourDConstantImageSource->SetSize(fourDInputSize);
+
   TRY_AND_EXIT_ON_ITK_EXCEPTION(fourDConstantImageSource->Update())
 
   // Go over each frame, reconstruct 3D frame and paste with iterators in 4D image
@@ -194,7 +190,7 @@ int main(int argc, char * argv[])
                 << "..."
                 << std::endl;
     selector->SetPhase(f/(double)args_info.frames_arg);
-    TRY_AND_EXIT_ON_ITK_EXCEPTION( streamerBP->UpdateLargestPossibleRegion() );
+    TRY_AND_EXIT_ON_ITK_EXCEPTION( streamerBP->UpdateLargestPossibleRegion() )
 
     FourDConstantImageSourceType::OutputImageRegionType region;
     region = fourDConstantImageSource->GetOutput()->GetLargestPossibleRegion();
@@ -218,7 +214,7 @@ int main(int argc, char * argv[])
   WriterType::Pointer writer = WriterType::New();
   writer->SetFileName( args_info.output_arg );
   writer->SetInput( fourDConstantImageSource->GetOutput() );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() );
+  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
 
   return EXIT_SUCCESS;
 }

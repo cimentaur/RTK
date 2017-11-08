@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __rtkSubSelectFromListImageFilter_h
-#define __rtkSubSelectFromListImageFilter_h
+#ifndef rtkSubSelectFromListImageFilter_h
+#define rtkSubSelectFromListImageFilter_h
 
 #include "rtkSubSelectImageFilter.h"
 #include "rtkConstantImageSource.h"
@@ -54,7 +54,7 @@ private:
 
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "rtkSubSelectFromListImageFilter.txx"
+#include "rtkSubSelectFromListImageFilter.hxx"
 #endif
 
 #endif

@@ -17,8 +17,8 @@
  *=========================================================================*/
 
 // rtk includes
-#include "rtkCudaFFTConvolutionImageFilter.hcu"
 #include "rtkCudaUtilities.hcu"
+#include "rtkCudaFFTConvolutionImageFilter.hcu"
 
 #include <itkMacro.h>
 
@@ -95,8 +95,10 @@ CUDA_fft_convolution(const int3 &inputDimension,
   else
     result = cufftPlan3d(&fftFwd, inputDimension.z, inputDimension.y, inputDimension.x, CUFFT_R2C);
   CUFFT_CHECK_ERROR(result);
+#if (CUDA_VERSION<8000)
   result = cufftSetCompatibilityMode(fftFwd, CUFFT_COMPATIBILITY_FFTW_ALL);
   CUFFT_CHECK_ERROR(result);
+#endif
   result = cufftExecR2C(fftFwd, deviceProjection, deviceProjectionFFT);
   CUFFT_CHECK_ERROR(result);
   cufftDestroy(fftFwd);
@@ -129,8 +131,10 @@ CUDA_fft_convolution(const int3 &inputDimension,
   else
     result = cufftPlan3d(&fftInv, inputDimension.z, inputDimension.y, inputDimension.x, CUFFT_C2R);
   CUFFT_CHECK_ERROR(result);
+#if (CUDA_VERSION<8000)
   result = cufftSetCompatibilityMode(fftInv, CUFFT_COMPATIBILITY_FFTW_ALL);
   CUFFT_CHECK_ERROR(result);
+#endif
   result = cufftExecC2R(fftInv, deviceProjectionFFT, deviceProjection);
   CUFFT_CHECK_ERROR(result);
 
@@ -170,15 +174,18 @@ padding_kernel(float *input,
   // central part in CPU code
   else if (i>=0 && i<inputDim.x)
     output[out_idx] = input[i + (j + k*inputDim.y) * inputDim.x];
-  // left mirroring
+  // left mirroring (equation 3a in [Ohnesorge et al, Med Phys, 2000])
   else if (i<0 && -i<sizeWeights)
-    output[out_idx] = input[-i + (j + k*inputDim.y) * inputDim.x] * truncationWeights[-i];
-  // right mirroring
-  else if (i-inputDim.x<sizeWeights)
+    {
+    int begRow = (j + k*inputDim.y) * inputDim.x;
+    output[out_idx] = (2*input[begRow+1]-input[-i + begRow]) * truncationWeights[-i];
+    }
+  // right mirroring (equation 3b in [Ohnesorge et al, Med Phys, 2000])
+  else if ((i>=inputDim.x) && (i-inputDim.x+1)<sizeWeights)
     {
     unsigned int borderDist = i-inputDim.x+1;
-    i = inputDim.x-1-borderDist;
-    output[out_idx] = input[i + (j + k*inputDim.y) * inputDim.x] * truncationWeights[borderDist];
+    int endRow = inputDim.x-1 + (j + k*inputDim.y) * inputDim.x;
+    output[out_idx] = (2*input[endRow]-input[endRow-borderDist]) * truncationWeights[borderDist];
     }
   // zero padding
   else

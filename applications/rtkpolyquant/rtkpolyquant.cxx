@@ -22,7 +22,6 @@
 #include "rtkThreeDCircularProjectionGeometryXMLFile.h"
 #include "rtkPolyquantConeBeamReconstructionFilter.h"
 #include "rtkNormalizedJosephBackProjectionImageFilter.h"
-#include "rtkPhaseGatingImageFilter.h"
 
 #ifdef RTK_USE_CUDA
   #include "itkCudaImage.h"
@@ -58,20 +57,6 @@ int main(int argc, char * argv[])
   geometryReader = rtk::ThreeDCircularProjectionGeometryXMLFileReader::New();
   geometryReader->SetFilename(args_info.geometry_arg);
   TRY_AND_EXIT_ON_ITK_EXCEPTION( geometryReader->GenerateOutputInformation() )
-
-  // Phase gating weights reader
-  typedef rtk::PhaseGatingImageFilter<OutputImageType> PhaseGatingFilterType;
-  PhaseGatingFilterType::Pointer phaseGating = PhaseGatingFilterType::New();
-  if (args_info.signal_given)
-    {
-    phaseGating->SetPhasesFileName(args_info.signal_arg);
-    phaseGating->SetGatingWindowWidth(args_info.windowwidth_arg);
-    phaseGating->SetGatingWindowCenter(args_info.windowcenter_arg);
-    phaseGating->SetGatingWindowShape(args_info.windowshape_arg);
-    phaseGating->SetInputProjectionStack(reader->GetOutput());
-    phaseGating->SetInputGeometry(geometryReader->GetOutputObject());
-    TRY_AND_EXIT_ON_ITK_EXCEPTION( phaseGating->Update() )
-    }
 
   // Create input: either an existing volume read from a file or a blank image
   itk::ImageSource< OutputImageType >::Pointer inputFilter;

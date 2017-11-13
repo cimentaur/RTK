@@ -1,10 +1,10 @@
 #include "other.h"
 #include <iostream>
 
-void grad_polyquant(const &in,param,ctSystem);
+void calc_polyquant(const &in,const &param,const ctSystemType &ctSystem);
 {
   // TODO: calculate full Polyquant gradient term
-  projA = A(rho,ind);
+  projA = ctSystem.projFor;
 
   specProb = specRat(1);
 

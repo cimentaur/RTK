@@ -19,6 +19,9 @@
 #include "rtkpolyquant_ggo.h"
 #include "rtkGgoFunctions.h"
 
+#include "rtkpolyquant.h"
+#include "alg_polyquant.h"
+
 #include "rtkThreeDCircularProjectionGeometryXMLFile.h"
 #include "rtkPolyquantConeBeamReconstructionFilter.h"
 #include "rtkNormalizedJosephBackProjectionImageFilter.h"
@@ -36,11 +39,11 @@ int main(int argc, char * argv[])
   typedef float OutputPixelType;
   const unsigned int Dimension = 3;
 
-#ifdef RTK_USE_CUDA
-  typedef itk::CudaImage< OutputPixelType, Dimension > OutputImageType;
-#else
-  typedef itk::Image< OutputPixelType, Dimension > OutputImageType;
-#endif
+//#ifdef RTK_USE_CUDA
+//  typedef itk::CudaImage< OutputPixelType, Dimension > OutputImageType;
+//#else
+//  typedef itk::Image< OutputPixelType, Dimension > OutputImageType;
+//#endif
 
   // Projections reader
   typedef rtk::ProjectionsReader< OutputImageType > ReaderType;
@@ -77,29 +80,73 @@ int main(int argc, char * argv[])
     inputFilter = constantImageSource;
     }
 
-  // SART reconstruction filter
-  rtk::PolyquantConeBeamReconstructionFilter< OutputImageType >::Pointer polyquant =
-      rtk::PolyquantConeBeamReconstructionFilter< OutputImageType >::New();
+  // CT system definition
+  ctSystemType ctSystem;
+  paramType param;
 
   // Set the forward and back projection filters
-  polyquant->SetForwardProjectionFilter(args_info.fp_arg);
-  polyquant->SetBackProjectionFilter(args_info.bp_arg);
-  polyquant->SetInput( inputFilter->GetOutput() );
-  if (args_info.signal_given)
-    {
-    polyquant->SetInput(1, phaseGating->GetOutput());
-    polyquant->SetGeometry( phaseGating->GetOutputGeometry() );
-    polyquant->SetGatingWeights( phaseGating->GetGatingWeightsOnSelectedProjections() );
-    }
-  else
-    {
-    polyquant->SetInput(1, reader->GetOutput());
-    polyquant->SetGeometry( geometryReader->GetOutputObject() );
-    }
-  polyquant->SetNumberOfIterations( args_info.niterations_arg );
-  polyquant->SetNumberOfProjectionsPerSubset( args_info.nprojpersubset_arg );
-  polyquant->SetLambda( args_info.lambda_arg );
-  polyquant->SetDisableDisplacedDetectorFilter(args_info.nodisplaced_flag);
+  switch(args_info.fp_arg)
+  {
+  case(fp_arg_Joseph):
+    ctSystem.forProj = rtk::JosephForwardProjectionImageFilter<OutputImageType, OutputImageType>::New();
+    break;
+  case(fp_arg_RayCastInterpolator):
+    ctSystem.forProj = rtk::RayCastInterpolatorForwardProjectionImageFilter<OutputImageType, OutputImageType>::New();
+    break;
+  case(fp_arg_CudaRayCast):
+#ifdef RTK_USE_CUDA
+    ctSystem.forProj = rtk::CudaForwardProjectionImageFilter<OutputImageType,OutputImageType>::New();
+    dynamic_cast<rtk::CudaForwardProjectionImageFilter<OutputImageType,OutputImageType>*>(ctSystem.forProj.GetPointer())->SetStepSize(args_info.step_arg);
+#else
+    std::cerr << "The program has not been compiled with cuda option" << std::endl;
+    return EXIT_FAILURE;
+#endif
+    break;
+  default:
+    std::cerr << "Unhandled --method value." << std::endl;
+    return EXIT_FAILURE;
+  }
+  switch(args_info.bp_arg)
+  {
+    case(bp_arg_VoxelBasedBackProjection):
+      ctSystem.backProj = rtk::BackProjectionImageFilter<OutputImageType,OutputImageType>::New();
+      break;
+    case(bp_arg_Joseph):
+      ctSystem.backProj = rtk::JosephBackProjectionImageFilter<OutputImageType,OutputImageType>::New();
+      break;
+    case(bp_arg_NormalizedJoseph):
+      ctSystem.backProj = rtk::NormalizedJosephBackProjectionImageFilter<OutputImageType,OutputImageType>::New();
+      break;
+    case(bp_arg_CudaBackProjection):
+#ifdef RTK_USE_CUDA
+      ctSystem.backProj = rtk::CudaBackProjectionImageFilter::New();
+#else
+      std::cerr << "The program has not been compiled with cuda option" << std::endl;
+      return EXIT_FAILURE;
+#endif
+      break;
+    case(bp_arg_CudaRayCast):
+#ifdef RTK_USE_CUDA
+      ctSystem.backProj = rtk::CudaRayCastBackProjectionImageFilter::New();
+#else
+      std::cerr << "The program has not been compiled with cuda option" << std::endl;
+      return EXIT_FAILURE;
+#endif
+      break;
+    default:
+    std::cerr << "Unhandled --method value." << std::endl;
+    return EXIT_FAILURE;
+  }
+  
+  // polyquant->SetInput( inputFilter->GetOutput() );
+  // polyquant->SetInput(1, reader->GetOutput());
+  ctSystem.geom = geometryReader->GetOutputObject();
+
+  param.nIter = args_info.niterations_arg;
+  param.nSplit = args_info.nprojpersubset_arg;
+  
+  // Perform the update 
+  os_polyquant(param,ctSystem);
 
   itk::TimeProbe totalTimeProbe;
   if(args_info.time_flag)
@@ -107,26 +154,21 @@ int main(int argc, char * argv[])
     std::cout << "Recording elapsed time... " << std::endl << std::flush;
     totalTimeProbe.Start();
     }
-  if(args_info.positivity_flag)
-    {
-    polyquant->SetEnforcePositivity(true);
-    }
-
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( polyquant->Update() )
+  //TRY_AND_EXIT_ON_ITK_EXCEPTION( polyquant->Update() )
 
   if(args_info.time_flag)
-    {
-    polyquant->PrintTiming(std::cout);
+  {
+    //polyquant->PrintTiming(std::cout);
     totalTimeProbe.Stop();
     std::cout << "It took...  " << totalTimeProbe.GetMean() << ' ' << totalTimeProbe.GetUnit() << std::endl;
-    }
+  }
 
   // Write
-  typedef itk::ImageFileWriter< OutputImageType > WriterType;
-  WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName( args_info.output_arg );
-  writer->SetInput( polyquant->GetOutput() );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
+  //typedef itk::ImageFileWriter< OutputImageType > WriterType;
+  //WriterType::Pointer writer = WriterType::New();
+  //writer->SetFileName( args_info.output_arg );
+  ///writer->SetInput( polyquant->GetOutput() );
+  //TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
 
   return EXIT_SUCCESS;
 }

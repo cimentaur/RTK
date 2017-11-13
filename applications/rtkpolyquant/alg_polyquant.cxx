@@ -1,9 +1,11 @@
-#include "other.h"
+#include "rtkpolyquant.h"
+#include "alg_polyquant.h"
 #include <iostream>
 
-void os_polyquant(const string &in, )
+void os_polyquant(paramType param,ctSystemType ctSystem)
 {
-  x0 = in;
+	std::cout << "Number of iterations = " << param.nIter << std::endl;
+  /*x0 = in;
   x1 = x0;
   for (int k = 0; k < param.nIter; k++)
   {
@@ -26,7 +28,7 @@ void os_polyquant(const string &in, )
       x1 = xNew;
 		}
 		
-  }
+  }*/
 }
 
 int bit_reversal(int index, int max)

@@ -28,11 +28,13 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
   subSetSystem.backProj->SetInput(param.volOld);
   volType grad;
   subtractType::Pointer derivUpdate = subtractType::New();
+  multiplyType::Pointer stepSizeFilter = multiplyType::New();
+  stepSizeFilter->SetConstant2(param.stepSize);
   OutputImageType::RegionType largestRegion = param.volOld->GetLargestPossibleRegion();
   largestRegion = param.volOld->GetLargestPossibleRegion();
 	for (int k = 0; k < param.nIter; k++)
   {
-  	
+  	derivUpdate->SetInput1(subSetParam.volOld);
     std::cout << "Running iteration " << k+1 << " of " << param.nIter << std::endl;
   	indArray.clear();
   	subSetProbe.Reset();
@@ -48,19 +50,19 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
     subSetSystem.forProj->SetGeometry(subSetSystem.geom);
     subSetSystem.backProj->SetGeometry(subSetSystem.geom);
     grad = grad_polyquant(subSetParam,subSetSystem);
-
-    //volNow = grad;
-    derivUpdate->SetInput1(param.volOld);
-    derivUpdate->SetInput2(grad);
+    stepSizeFilter->SetInput1(grad);
+    derivUpdate->SetInput2(stepSizeFilter->GetOutput());
     derivUpdate->GetOutput()->SetRequestedRegion( largestRegion );
-    
-    volNow = derivUpdate->GetOutput();
+    subSetParam.volOld = derivUpdate->GetOutput();
+    subSetParam.volOld->SetRegions(largestRegion);
+    subSetParam.volOld->SetOrigin(param.volOld->GetOrigin());
+    subSetParam.volOld->SetSpacing(param.volOld->GetSpacing());
     subSetProbe.Stop();
   	std::cout << "\tCompleted in " << subSetProbe.GetTotal()
-  																 << subSetProbe.GetUnit() << std::endl;
-  	std::cout << "Original geom has " << ctSystem.geom->GetGantryAngles().size() << std::endl;							 				
+  																 << subSetProbe.GetUnit() << std::endl;						 				
   }
-  param.y = param.volOld;
+  param.recon = subSetParam.volOld;
+  //param.recon->SetRegions(largestRegion);
 }
 
 int bit_reversal(int index, int max)

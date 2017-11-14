@@ -143,6 +143,7 @@ int main(int argc, char * argv[])
   param.volOld = inputFilter->GetOutput();
   param.nIter = args_info.niterations_arg;
   param.nSplit = args_info.nprojpersubset_arg;
+  param.stepSize = args_info.lambda_arg;
   param.nProj = ctSystem.geom->GetGantryAngles().size();
   
   // Perform the update
@@ -170,7 +171,8 @@ int main(int argc, char * argv[])
   typedef itk::ImageFileWriter< OutputImageType > WriterType;
   WriterType::Pointer writer = WriterType::New();
   writer->SetFileName( args_info.output_arg );
-  writer->SetInput(param.y);
+  writer->SetInput(param.recon);
+  //writer->GetInput(param.rec);
   writeProbe.Start();
   TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
   writeProbe.Stop();

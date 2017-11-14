@@ -37,8 +37,10 @@ struct paramType
   int nFac;
   int nSplit;
   int nProj;
+  float stepSize;
   bool accelerate;
   volType volOld;
+  volType recon;
   volType y;  // y is the measurements
 };
 

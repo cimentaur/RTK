@@ -22,15 +22,13 @@
 #include "rtkpolyquant.h"
 #include "alg_polyquant.h"
 
-#include "rtkThreeDCircularProjectionGeometryXMLFile.h"
-#include "rtkPolyquantConeBeamReconstructionFilter.h"
-#include "rtkNormalizedJosephBackProjectionImageFilter.h"
+//#include "rtkThreeDCircularProjectionGeometryXMLFile.h"
 
 #ifdef RTK_USE_CUDA
   #include "itkCudaImage.h"
 #endif
 
-#include <itkImageFileWriter.h>
+
 
 int main(int argc, char * argv[])
 {
@@ -141,11 +139,13 @@ int main(int argc, char * argv[])
   // polyquant->SetInput( inputFilter->GetOutput() );
   // polyquant->SetInput(1, reader->GetOutput());
   ctSystem.geom = geometryReader->GetOutputObject();
-
+  param.y = reader->GetOutput();
+  param.volOld = inputFilter->GetOutput();
   param.nIter = args_info.niterations_arg;
   param.nSplit = args_info.nprojpersubset_arg;
+  param.nProj = ctSystem.geom->GetGantryAngles().size();
   
-  // Perform the update 
+  // Perform the update
   os_polyquant(param,ctSystem);
 
   itk::TimeProbe totalTimeProbe;
@@ -164,11 +164,20 @@ int main(int argc, char * argv[])
   }
 
   // Write
-  //typedef itk::ImageFileWriter< OutputImageType > WriterType;
-  //WriterType::Pointer writer = WriterType::New();
-  //writer->SetFileName( args_info.output_arg );
-  ///writer->SetInput( polyquant->GetOutput() );
-  //TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
+  if(args_info.verbose_flag)
+    std::cout << "Writing... " << std::endl;
+  itk::TimeProbe writeProbe;
+  typedef itk::ImageFileWriter< OutputImageType > WriterType;
+  WriterType::Pointer writer = WriterType::New();
+  writer->SetFileName( args_info.output_arg );
+  writer->SetInput(param.y);
+  writeProbe.Start();
+  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
+  writeProbe.Stop();
+  if(args_info.verbose_flag)
+    std::cout << " done in "
+              << writeProbe.GetMean() << ' ' << writeProbe.GetUnit()
+              << '.' << std::endl;
 
   return EXIT_SUCCESS;
 }

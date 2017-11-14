@@ -1,12 +1,22 @@
-#include "other.h"
-#include <iostream>
+#include "rtkpolyquant.h"
+#include "calc_polyquant.h"
 
-void calc_polyquant(const &in,const &param,const ctSystemType &ctSystem);
+volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
 {
   // TODO: calculate full Polyquant gradient term
-  projA = ctSystem.projFor;
-
-  specProb = specRat(1);
+  ctSystem.forProj->SetInput(1,param.volOld);
+  ctSystem.forProj->Update();
+  
+  typedef itk::SubtractImageFilter<OutputImageType,OutputImageType> subtractType;
+  subtractType::Pointer subFilter = subtractType::New();
+  subFilter->SetInput1(ctSystem.forProj->GetOutput());
+  subFilter->SetInput2(param.y);
+  subFilter->Update();
+  
+  //ctSystem.backProj->SetInput(1,subFilter->GetOutput());
+  //ctSystem.backProj->Update();
+  return subFilter->GetOutput();
+  /*specProb = specRat(1);
 
   tmp1 = specProb.*exp(-(specData.boneMa(1)*projA));
   tmpA = tmp1*specData.boneMa(1);
@@ -23,5 +33,5 @@ void calc_polyquant(const &in,const &param,const ctSystemType &ctSystem);
 	deriFac = (y./(tmp1+s)-1);
 	outA = w(tmpA.*deriFac);
 
-	out = At(outA,ind);
+	out = At(outA,ind);*/
 }

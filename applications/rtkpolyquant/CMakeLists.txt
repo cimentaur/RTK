@@ -1,5 +1,5 @@
 WRAP_GGO(rtkpolyquant_GGO_C rtkpolyquant.ggo ../rtkinputprojections_section.ggo ../rtk3Doutputimage_section.ggo ${RTK_BINARY_DIR}/rtkVersion.ggo)
-add_executable(rtkpolyquant rtkpolyquant.cxx alg_polyquant.cxx ${rtkpolyquant_GGO_C})
+add_executable(rtkpolyquant rtkpolyquant.cxx alg_polyquant.cxx calc_polyquant.cxx ${rtkpolyquant_GGO_C})
 target_link_libraries(rtkpolyquant RTK)
 
 if (RTK_USE_CUDA)

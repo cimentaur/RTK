@@ -2,7 +2,6 @@
 #include <vector>
 #include <itkPasteImageFilter.h>
 #include "rtkConstantImageSource.h"
-#include <itkMultiplyImageFilter.h>
 //#include "rtkSubSelectFromListImageFilter.h"
 
 void os_polyquant(paramType &param,ctSystemType ctSystem);

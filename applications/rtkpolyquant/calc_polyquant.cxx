@@ -7,15 +7,17 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   ctSystem.forProj->SetInput(1,param.volOld);
   ctSystem.forProj->Update();
   
-  typedef itk::SubtractImageFilter<OutputImageType,OutputImageType> subtractType;
   subtractType::Pointer subFilter = subtractType::New();
+  //subFilter->ReleaseDataFlagOn();
   subFilter->SetInput1(ctSystem.forProj->GetOutput());
   subFilter->SetInput2(param.y);
   subFilter->Update();
   
-  //ctSystem.backProj->SetInput(1,subFilter->GetOutput());
-  //ctSystem.backProj->Update();
-  return subFilter->GetOutput();
+  ctSystem.backProj->SetInput(1,subFilter->GetOutput());
+  ctSystem.backProj->Update();
+  //ctSystem.backProj->GetOutput()->UpdateOutputInformation();
+  //ctSystem.backProj->GetOutput()->PropagateRequestedRegion();
+  return ctSystem.backProj->GetOutput();
   /*specProb = specRat(1);
 
   tmp1 = specProb.*exp(-(specData.boneMa(1)*projA));

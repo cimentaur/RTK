@@ -11,26 +11,28 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
 	int ind; // = sizeof(indArray)/sizeof(*indArray);
 	ctSystemType subSetSystem = ctSystem;
 	paramType subSetParam = param;
-	volType volNow = param.volOld;
-	
+	volType volNow = param.volOld;//->GetOutput();
+	std::cout << "Initialising measurements..." << std::endl;
 	std::vector<int> indArray;
   for (int j = 0; j<param.nProj/param.nSplit; j++)
   {
   	indArray.push_back(j*param.nSplit);
   }
   volType emptyProj = calc_subset_proj(param,indArray);
-  typedef itk::MultiplyImageFilter<OutputImageType,OutputImageType> multiplyType;
+
   multiplyType::Pointer multFilter = multiplyType::New();
   multFilter->SetInput1(emptyProj);
   multFilter->SetConstant2(0);
   multFilter->Update();
-  emptyProj = multFilter->GetOutput();
-  std::cout << "Initialising measurements..." << std::endl;
-  param.y->Update();
-  subSetSystem.forProj->SetInput(emptyProj);
+  subSetSystem.forProj->SetInput(multFilter->GetOutput());
   subSetSystem.backProj->SetInput(param.volOld);
+  volType grad;
+  subtractType::Pointer derivUpdate = subtractType::New();
+  OutputImageType::RegionType largestRegion = param.volOld->GetLargestPossibleRegion();
+  largestRegion = param.volOld->GetLargestPossibleRegion();
 	for (int k = 0; k < param.nIter; k++)
   {
+  	
     std::cout << "Running iteration " << k+1 << " of " << param.nIter << std::endl;
   	indArray.clear();
   	subSetProbe.Reset();
@@ -45,12 +47,20 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
     subSetSystem.geom = calc_subset_geom(ctSystem,indArray);
     subSetSystem.forProj->SetGeometry(subSetSystem.geom);
     subSetSystem.backProj->SetGeometry(subSetSystem.geom);
-    param.y = grad_polyquant(subSetParam,subSetSystem);	
+    grad = grad_polyquant(subSetParam,subSetSystem);
+
+    //volNow = grad;
+    derivUpdate->SetInput1(param.volOld);
+    derivUpdate->SetInput2(grad);
+    derivUpdate->GetOutput()->SetRequestedRegion( largestRegion );
+    
+    volNow = derivUpdate->GetOutput();
     subSetProbe.Stop();
   	std::cout << "\tCompleted in " << subSetProbe.GetTotal()
   																 << subSetProbe.GetUnit() << std::endl;
-  								 				
+  	std::cout << "Original geom has " << ctSystem.geom->GetGantryAngles().size() << std::endl;							 				
   }
+  param.y = param.volOld;
 }
 
 int bit_reversal(int index, int max)

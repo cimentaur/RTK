@@ -13,6 +13,9 @@
 // #include "rtkPhaseReader.h"
 #include "rtkThreeDCircularProjectionGeometryXMLFile.h"
 
+#include <itkSubtractImageFilter.h>
+#include <itkMultiplyImageFilter.h>
+
 #include <itkTimeProbe.h>
 #include <itkImageFileWriter.h>
 
@@ -24,7 +27,8 @@ typedef rtk::ThreeDCircularProjectionGeometry::Pointer geomType;
 
 typedef rtk::ForwardProjectionImageFilter<OutputImageType,OutputImageType>::Pointer fType;
 typedef rtk::BackProjectionImageFilter<OutputImageType,OutputImageType>::Pointer bType;
-
+typedef itk::SubtractImageFilter<OutputImageType,OutputImageType> subtractType;
+typedef itk::MultiplyImageFilter<OutputImageType,OutputImageType> multiplyType;
 
 																				 
 struct paramType

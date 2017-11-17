@@ -2,7 +2,6 @@
 #include <vector>
 #include <itkPasteImageFilter.h>
 #include "rtkConstantImageSource.h"
-//#include "rtkSubSelectFromListImageFilter.h"
 
 void os_polyquant(paramType &param,ctSystemType ctSystem);
 int bit_reversal(int index,int max);

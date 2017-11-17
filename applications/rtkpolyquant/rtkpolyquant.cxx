@@ -145,6 +145,15 @@ int main(int argc, char * argv[])
   param.nSplit = args_info.nprojpersubset_arg;
   param.stepSize = args_info.lambda_arg;
   param.nProj = ctSystem.geom->GetGantryAngles().size();
+  param.accelerate = false;
+  param.spectrum.push_back(1);
+  param.knee.push_back(1);
+  for (int i = 0;i<4;i++)
+  {
+    param.spectrum.push_back(0);
+  	param.knee.push_back(0);
+  }
+  
   
   // Perform the update
   os_polyquant(param,ctSystem);

@@ -9,6 +9,7 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
 	std::cout << "Number of projections = " << param.nProj << std::endl;
 	volType ySub;
 	int ind; // = sizeof(indArray)/sizeof(*indArray);
+	float t = 1; float t1 = 1;
 	ctSystemType subSetSystem = ctSystem;
 	paramType subSetParam = param;
 	volType volNow = param.volOld;//->GetOutput();
@@ -25,7 +26,8 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
   multFilter->SetConstant2(0);
   multFilter->Update();
   subSetSystem.forProj->SetInput(multFilter->GetOutput());
-  subSetSystem.backProj->SetInput(param.volOld);
+  //subSetSystem.forProj->ReleaseDataFlagOn();
+	subSetSystem.backProj->SetInput(param.volOld);
   volType grad;
   subtractType::Pointer derivUpdate = subtractType::New();
   multiplyType::Pointer stepSizeFilter = multiplyType::New();
@@ -59,10 +61,18 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
     subSetParam.volOld->SetSpacing(param.volOld->GetSpacing());
     subSetProbe.Stop();
   	std::cout << "\tCompleted in " << subSetProbe.GetTotal()
-  																 << subSetProbe.GetUnit() << std::endl;						 				
+  																 << subSetProbe.GetUnit() << std::endl;
+  	if (param.accelerate)
+  	{
+  		// TODO: perform FISTA type acceleration
+  	  //t1 = 0.5*(1+sqrt(1+4*t^2));
+      //x1 = xNew+(t-1)/t1*(xNew-x0);
+      //x0 = xNew;
+      //t = t1;
+  	}			 				
   }
-  param.recon = subSetParam.volOld;
-  //param.recon->SetRegions(largestRegion);
+  // Output gradient for testing
+  param.recon = grad;//subSetParam.volOld;
 }
 
 int bit_reversal(int index, int max)

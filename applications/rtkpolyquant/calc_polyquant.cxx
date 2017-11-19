@@ -63,24 +63,24 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   // First derivative value
   multFilt->SetInput1(tmpProj);
   //multFilt->ReleaseDataFlagOn();
-  multFilt->SetConstant2(-param.knee[0]);
+  multFilt->SetConstant2(param.knee[0]);
   multFilt->Update();
   volType addDerivA = multFilt->GetOutput();
   addDerivA->DisconnectPipeline();
   // Second derivative value
-  multFilt->SetConstant2(-param.knee[1]);
+  multFilt->SetConstant2(param.knee[1]);
   multFilt->Update();
   volType addDerivB = multFilt->GetOutput();
   addDerivB->DisconnectPipeline();
   // Third derivative value
-  multFilt->SetConstant2(-param.knee[3]);
+  multFilt->SetConstant2(param.knee[3]);
   multFilt->Update();
   volType addDerivC = multFilt->GetOutput();
   addDerivC->DisconnectPipeline();
   std::cout << "Initialised all variables OK!" << std::endl;
   
   volType tmpProjIter;
-  for (int k = 1; k<2; k++)
+  for (int k = 1; k<5; k++)
   {
   	expFilt->SetInput(calc_poly_projection(projA,projB,projC,constB,constC,param,k));
   	expFilt->Update();
@@ -97,7 +97,7 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   	tmpProj->DisconnectPipeline();
   	// First derivative value
   	multFilt->SetInput1(tmpProjIter);
-  	multFilt->SetConstant2(-param.knee[0]);
+  	multFilt->SetConstant2(param.knee[0]);
   	multFilt->Update();
   	addSpecProj->SetInput1(multFilt->GetOutput());
   	addSpecProj->SetInput2(addDerivA);
@@ -105,7 +105,7 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   	addDerivA = addSpecProj->GetOutput();
   	addDerivA->DisconnectPipeline();
   	// Second derivative value
-  	multFilt->SetConstant2(-param.knee[1]);
+  	multFilt->SetConstant2(param.knee[1]);
   	multFilt->Update();
   	addSpecProj->SetInput1(multFilt->GetOutput());
   	addSpecProj->SetInput2(addDerivA);
@@ -113,7 +113,7 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   	addDerivB = addSpecProj->GetOutput();
   	addDerivB->DisconnectPipeline();
   	// Third derivative value
-  	multFilt->SetConstant2(-param.knee[3]);
+  	multFilt->SetConstant2(param.knee[3]);
   	multFilt->Update();
   	addSpecProj->SetInput1(multFilt->GetOutput());
   	addSpecProj->SetInput2(addDerivA);
@@ -143,6 +143,8 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   std::cout << "Calculated the forward derivative OK!" << std::endl;
   ctSystem.backProj->SetInput(1,multOutFilt->GetOutput());
   ctSystem.backProj->Update();
+  //ctSystem.backProj->GetOutput()->UpdateOutputInformation();
+  //ctSystem.backProj->GetOutput()->PropagateRequestedRegion();
   return ctSystem.backProj->GetOutput();
   /* Linearised gradient calculation
   ctSystem.forProj->SetInput(1,param.volOld);
@@ -168,27 +170,27 @@ volType calc_poly_projection(volType &projA,volType &projB,volType &projC,
 	addType::Pointer addFilt = addType::New();
 	addFilt->InPlaceOn();
 	multFilt->SetInput1(projA);
-	multFilt->SetConstant2(param.knee[0]);
+	multFilt->SetConstant2(-param.knee[0]);
 	multFilt->Update();
 	addFilt->SetInput2(multFilt->GetOutput());
 	multFilt->SetInput1(projB);
-	multFilt->SetConstant2(param.knee[1]);
+	multFilt->SetConstant2(-param.knee[1]);
 	multFilt->Update();
 	addFilt->SetInput1(multFilt->GetOutput());
 	addFilt->Update();
 	//addFilt->SetInput1(this->GetOutput());
 	multFilt->SetInput1(constB);
-	multFilt->SetConstant2(param.knee[2]);
+	multFilt->SetConstant2(-param.knee[2]);
 	multFilt->Update();
 	addFilt->SetInput1(multFilt->GetOutput());
 	addFilt->Update();
 	multFilt->SetInput1(projC);
-	multFilt->SetConstant2(param.knee[3]);
+	multFilt->SetConstant2(-param.knee[3]);
 	multFilt->Update();
 	addFilt->SetInput1(multFilt->GetOutput());
 	addFilt->Update();
 	multFilt->SetInput1(constC);
-	multFilt->SetConstant2(param.knee[4]);
+	multFilt->SetConstant2(-param.knee[4]);
 	multFilt->Update();
 	addFilt->SetInput1(multFilt->GetOutput());
 	addFilt->Update();

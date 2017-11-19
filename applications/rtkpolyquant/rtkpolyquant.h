@@ -23,6 +23,8 @@
 #include <itkExpImageFilter.h>
 #include <itkDivideImageFilter.h>
 
+#include<fstream>
+
 //#include <itkMatrix>
 
 // typedef itk::Image<float,3> volumeType projType;

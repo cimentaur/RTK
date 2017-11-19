@@ -142,28 +142,43 @@ int main(int argc, char * argv[])
   param.y = reader->GetOutput();
   param.volOld = inputFilter->GetOutput();
   param.nIter = args_info.niterations_arg;
-  param.nSplit = args_info.nprojpersubset_arg;
+  param.nSplit = args_info.nsplit_arg;
   param.stepSize = args_info.lambda_arg;
   param.nProj = ctSystem.geom->GetGantryAngles().size();
   param.accelerate = false;
-  param.spectrum.push_back(1);
-  param.knee.push_back(1);
-  for (int i = 0;i<4;i++)
+  //param.spectrum.push_back(1);
+  //param.knee.push_back(1);
+  //param.spectrum.push_back(0);
+  //param.knee.push_back(1);
+  std::ifstream spectrumFile(args_info.spectrumfile_arg);
+
+	// test file open   
+	if (spectrumFile)
+	{        
+    float value;
+    // read the elements in the file into a vector  
+    while (spectrumFile >> value)
+    {
+        param.spectrum.push_back(value);
+    }
+    spectrumFile.close();
+  }
+  else
   {
-    param.spectrum.push_back(0);
-  	param.knee.push_back(0);
+  	std::cout << "I cannot find the spectrum file .o0 FAILS!" << std::endl;
+  	return EXIT_SUCCESS;
   }
   
-  
-  // Perform the update
-  os_polyquant(param,ctSystem);
-
   itk::TimeProbe totalTimeProbe;
   if(args_info.time_flag)
     {
     std::cout << "Recording elapsed time... " << std::endl << std::flush;
     totalTimeProbe.Start();
     }
+  // Perform the update
+  os_polyquant(param,ctSystem);
+
+  
   //TRY_AND_EXIT_ON_ITK_EXCEPTION( polyquant->Update() )
 
   if(args_info.time_flag)

@@ -7,10 +7,12 @@ option "geometry"    g "XML geometry file name"                                s
 option "output"      o "Output file name"                                      string yes
 option "niterations" n "Number of iterations"                                  int    no   default="5"
 option "time"        t "Records elapsed time during the process"               flag   off
-option "lambda"      l "Convergence factor"                                    double no   default="0.3"
+option "lambda"      l "Step size"                                    double no   default="0.3"
 option "positivity"  - "Enforces positivity during the reconstruction"         flag   off
 option "input"     i "Input volume"              string          no
-option "nprojpersubset" - "Number of projections processed between each update of the reconstructed volume (1 for SART, several for OSSART, all for SIRT)" int no default="1"
+option "nsplit" - "Number of subset divisions of the projection stack per iteration" int no default="1"
+option "spectrumfile" - "Text file containing normalised spectrum of the source" string yes
+option "kneefile" 		- "Text file containing Polyquant knee factors"						string yes
 option "nodisplaced"    - "Disable the displaced detector filter"              flag   off
 
 section "Phase gating"

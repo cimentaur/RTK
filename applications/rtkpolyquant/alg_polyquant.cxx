@@ -14,13 +14,14 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
 	paramType subSetParam = param;
 	volType volNow = param.volOld;//->GetOutput();
 	std::cout << "Initialising measurements..." << std::endl;
+	param.y->Update();
 	std::vector<int> indArray;
   for (int j = 0; j<param.nProj/param.nSplit; j++)
   {
   	indArray.push_back(j*param.nSplit);
   }
   volType emptyProj = calc_subset_proj(param,indArray);
-
+  
   multiplyType::Pointer multFilter = multiplyType::New();
   multFilter->SetInput1(emptyProj);
   multFilter->SetConstant2(0);
@@ -52,6 +53,7 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
     subSetSystem.forProj->SetGeometry(subSetSystem.geom);
     subSetSystem.backProj->SetGeometry(subSetSystem.geom);
     grad = grad_polyquant(subSetParam,subSetSystem);
+    grad->DisconnectPipeline();
     stepSizeFilter->SetInput1(grad);
     derivUpdate->SetInput2(stepSizeFilter->GetOutput());
     derivUpdate->GetOutput()->SetRequestedRegion( largestRegion );
@@ -72,7 +74,7 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
   	}			 				
   }
   // Output gradient for testing
-  param.recon = grad;//subSetParam.volOld;
+  param.recon = subSetParam.volOld;
 }
 
 int bit_reversal(int index, int max)

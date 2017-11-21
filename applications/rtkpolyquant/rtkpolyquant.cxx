@@ -135,9 +135,7 @@ int main(int argc, char * argv[])
     std::cerr << "Unhandled --method value." << std::endl;
     return EXIT_FAILURE;
   }
-  
-  // polyquant->SetInput( inputFilter->GetOutput() );
-  // polyquant->SetInput(1, reader->GetOutput());
+
   ctSystem.geom = geometryReader->GetOutputObject();
   param.y = reader->GetOutput();
   param.volOld = inputFilter->GetOutput();
@@ -146,47 +144,72 @@ int main(int argc, char * argv[])
   param.stepSize = args_info.lambda_arg;
   param.nProj = ctSystem.geom->GetGantryAngles().size();
   param.accelerate = false;
-  //param.spectrum.push_back(1);
-  //param.knee.push_back(1);
-  //param.spectrum.push_back(0);
-  //param.knee.push_back(1);
+  std::cout << "Found spectrum and it is " << args_info.spectrumfile_arg << std::endl;
   std::ifstream spectrumFile(args_info.spectrumfile_arg);
-
-	// test file open   
-	if (spectrumFile)
-	{        
-    float value;
-    // read the elements in the file into a vector  
-    while (spectrumFile >> value)
-    {
-        param.spectrum.push_back(value);
-    }
-    spectrumFile.close();
+  // test file open   
+  if (spectrumFile)
+  {        
+	  float value;
+	  // read the elements in the file into a vector  
+	  while (spectrumFile >> value)
+	  {
+	    param.spectrum.push_back(value);
+	  }
+	  spectrumFile.close();
+	  //std::cout << "Found spectrum and it is " << param.spectrum << std::endl;
   }
   else
   {
   	std::cout << "I cannot find the spectrum file .o0 FAILS!" << std::endl;
-  	return EXIT_SUCCESS;
+  	return EXIT_FAILURE;
   }
-  
-  itk::TimeProbe totalTimeProbe;
-  if(args_info.time_flag)
+  std::cout << "Found knee and it is " << args_info.kneefile_arg << std::endl;
+  std::cout << "Spectrum length is " << param.spectrum.size() << std::endl;
+  std::ifstream kneeFile(args_info.kneefile_arg);
+  // test file open   
+  if (kneeFile)
+  {
+    float value;
+    // insert the knee factors into the vector
+    for (int k = 0; k<2; k++)
     {
-    std::cout << "Recording elapsed time... " << std::endl << std::flush;
-    totalTimeProbe.Start();
-    }
+      kneeFile >> value;
+      param.facKnee.push_back(value);
+    }      
+	  // read the elements in the file into a vector  
+	  for (int k = 0; k<param.spectrum.size(); k++)
+	  {
+	    std::vector<float> row; 
+      for (int j = 0; j<5; j++)
+      {
+        kneeFile >> value;
+        row.push_back(value);
+      }
+      param.knee.push_back(row);
+	  }
+	  //std::cout << "Found knee and it is " << param.knee << std::endl;
+	  kneeFile.close();
+  }
+  else
+  {
+  	std::cout << "I cannot find the spectrum file .o0 FAILS!" << std::endl;
+  	return EXIT_FAILURE;
+  }  
+
+  itk::TimeProbe totalTimeProbe;
+
+  std::cout << "Recording elapsed time... " << std::endl << std::flush;
+  totalTimeProbe.Start();
+
   // Perform the update
   os_polyquant(param,ctSystem);
 
   
   //TRY_AND_EXIT_ON_ITK_EXCEPTION( polyquant->Update() )
 
-  if(args_info.time_flag)
-  {
-    //polyquant->PrintTiming(std::cout);
-    totalTimeProbe.Stop();
-    std::cout << "It took...  " << totalTimeProbe.GetMean() << ' ' << totalTimeProbe.GetUnit() << std::endl;
-  }
+  //polyquant->PrintTiming(std::cout);
+  totalTimeProbe.Stop();
+  std::cout << "It took...  " << totalTimeProbe.GetMean() << ' ' << totalTimeProbe.GetUnit() << std::endl;
 
   // Write
   if(args_info.verbose_flag)

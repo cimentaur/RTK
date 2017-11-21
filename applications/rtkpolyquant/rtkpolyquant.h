@@ -22,6 +22,7 @@
 #include <itkThresholdImageFilter.h>
 #include <itkExpImageFilter.h>
 #include <itkDivideImageFilter.h>
+#include <itkMaskImageFilter.h>
 
 #include<fstream>
 
@@ -42,6 +43,7 @@ typedef itk::ThresholdImageFilter<OutputImageType> thresholdType;
 typedef itk::BinaryThresholdImageFilter<OutputImageType,OutputImageType> maskType;
 typedef itk::ExpImageFilter<OutputImageType,OutputImageType> expType;
 typedef itk::DivideImageFilter<OutputImageType,OutputImageType,OutputImageType> divType;
+typedef itk::MaskImageFilter<OutputImageType,OutputImageType> maskingType;
 																				 
 struct paramType
 {
@@ -55,7 +57,8 @@ struct paramType
   volType recon;
   volType y;  // y is the measurements
   std::vector<float> spectrum;
-  std::vector<float> knee;
+  std::vector<float> facKnee;
+  std::vector< std::vector<float> > knee;
   //itk::Matrix kneeData;
 };
 

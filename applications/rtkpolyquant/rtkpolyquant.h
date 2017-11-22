@@ -12,6 +12,7 @@
 
 // #include "rtkPhaseReader.h"
 #include "rtkThreeDCircularProjectionGeometryXMLFile.h"
+#include "rtkDisplacedDetectorImageFilter.h"
 
 #include <itkTimeProbe.h>
 #include <itkImageFileWriter.h>
@@ -34,6 +35,9 @@ typedef OutputImageType::Pointer volType;
 //typedef itk::Image< float, 3 > OutputImageType;
 typedef rtk::ThreeDCircularProjectionGeometry::Pointer geomType;
 
+typedef rtk::DisplacedDetectorImageFilter<OutputImageType> ddType;
+
+//typedef rtk::DisplacedDetectorImageFilter<OutputImageType>::Pointer ddFilterType;
 typedef rtk::ForwardProjectionImageFilter<OutputImageType,OutputImageType>::Pointer fType;
 typedef rtk::BackProjectionImageFilter<OutputImageType,OutputImageType>::Pointer bType;
 typedef itk::SubtractImageFilter<OutputImageType,OutputImageType> subtractType;
@@ -52,6 +56,7 @@ struct paramType
   int nSplit;
   int nProj;
   float stepSize;
+  float up;  // up is the maximum allowable value
   bool accelerate;
   volType volOld;
   volType recon;

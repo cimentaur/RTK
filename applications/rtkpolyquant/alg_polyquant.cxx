@@ -9,10 +9,11 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
 	std::cout << "Number of projections = " << param.nProj << std::endl;
 	volType ySub;
 	int ind; // = sizeof(indArray)/sizeof(*indArray);
-	float t = 1; float t1 = 1;
+	float t = 1; float t1;
 	ctSystemType subSetSystem = ctSystem;
 	paramType subSetParam = param;
 	volType volNow = param.volOld;//->GetOutput();
+	subSetParam.recon = param.volOld;
 	std::cout << "Initialising measurements..." << std::endl;
 	param.y->Update();
 	std::vector<int> indArray;
@@ -35,12 +36,16 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
   stepSizeFilter->SetConstant2(param.stepSize);
   OutputImageType::RegionType largestRegion = param.volOld->GetLargestPossibleRegion();
   largestRegion = param.volOld->GetLargestPossibleRegion();
+  
+  multiplyType::Pointer fistaMult = multiplyType::New();
+  addType::Pointer fistaAdd = addType::New();
+  subtractType::Pointer fistaSub = subtractType::New();
 	for (int k = 0; k < param.nIter; k++)
   {
-  	derivUpdate->SetInput1(subSetParam.volOld);
-    std::cout << "Running iteration " << k+1 << " of " << param.nIter << std::endl;
+  	derivUpdate->SetInput1(subSetParam.recon);
+    //std::cout << "Running iteration " << k+1 << " of " << param.nIter << std::endl;
   	indArray.clear();
-  	subSetProbe.Reset();
+  	//subSetProbe.Reset();
   	subSetProbe.Start();
   	ind = (k%param.nSplit);
   	// calculate a subset
@@ -57,24 +62,38 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
     stepSizeFilter->SetInput1(grad);
     derivUpdate->SetInput2(stepSizeFilter->GetOutput());
     derivUpdate->GetOutput()->SetRequestedRegion( largestRegion );
-    subSetParam.volOld = derivUpdate->GetOutput();
-    subSetParam.volOld->SetRegions(largestRegion);
-    subSetParam.volOld->SetOrigin(param.volOld->GetOrigin());
-    subSetParam.volOld->SetSpacing(param.volOld->GetSpacing());
+    volNow = proj_nn(derivUpdate->GetOutput(),param.up);
+    volNow->SetRegions(largestRegion);
+    volNow->SetOrigin(param.volOld->GetOrigin());
+    volNow->SetSpacing(param.volOld->GetSpacing());
     subSetProbe.Stop();
-  	std::cout << "\tCompleted in " << subSetProbe.GetTotal()
-  																 << subSetProbe.GetUnit() << std::endl;
+    print_stats(k,param,subSetProbe);
+  	//std::cout << "\tCompleted in " << subSetProbe.GetTotal()
+  	//															 << subSetProbe.GetUnit() << std::endl;
   	if (param.accelerate)
   	{
-  		// TODO: perform FISTA type acceleration
-  	  //t1 = 0.5*(1+sqrt(1+4*t^2));
-      //x1 = xNew+(t-1)/t1*(xNew-x0);
-      //x0 = xNew;
-      //t = t1;
+  	  t1 = 0.5*(1+sqrt(1+4*t*t));
+  	  fistaSub->SetInput1(volNow);
+  	  fistaSub->SetInput2(subSetParam.volOld);
+  	  fistaSub->Update();
+  	  fistaMult->SetInput1(fistaSub->GetOutput());
+  	  fistaMult->SetConstant2((t-1)/t1);
+  	  fistaMult->Update();
+  	  fistaAdd->SetInput1(volNow);
+  	  fistaAdd->SetInput2(fistaMult->GetOutput());
+  	  fistaAdd->Update();
+      subSetParam.recon = fistaAdd->GetOutput();
+      subSetParam.volOld = volNow;
+      t = t1;
+  	}
+  	else
+  	{
+  	  subSetParam.recon = volNow;
   	}			 				
   }
+  std::cout << std::endl;
   // Output gradient for testing
-  param.recon = subSetParam.volOld;
+  param.recon = subSetParam.recon;
 }
 
 int bit_reversal(int index, int max)
@@ -135,4 +154,33 @@ volType calc_subset_proj(paramType &param,std::vector<int> indArray)
     TRY_AND_EXIT_ON_ITK_EXCEPTION( paste->Update() )
   }
   return paste->GetOutput();
+}
+
+volType proj_nn(volType in,float upValue)
+{
+  thresholdType::Pointer threshFilt = thresholdType::New();
+  threshFilt->SetOutsideValue(0);
+  threshFilt->ThresholdOutside(0,upValue);
+  threshFilt->SetInput(in);
+  threshFilt->Update();
+  return threshFilt->GetOutput();
+}
+
+void print_stats(int iter,paramType &param,itk::TimeProbe &subSetProbe)
+{
+  int barWidth = 40;
+  float progress = (float)(iter+1)/(float)param.nIter;
+  std::cout << "[";
+  int pos = barWidth * progress;
+  for (int i = 0; i < barWidth; ++i) {
+      if (i < pos) std::cout << "=";
+      else if (i == pos) std::cout << ">";
+      else std::cout << " ";
+  }
+  float remain = subSetProbe.GetMean()*(float)(param.nIter-iter+1);
+  std::cout << std::setprecision(3) << "] (" << iter+1 << "/" << param.nIter
+            << ") avg_t=" << subSetProbe.GetMean()
+            << "s tot_t=" << subSetProbe.GetTotal()
+            << "s rem_t=" << remain << "s \r";
+  std::cout.flush();
 }

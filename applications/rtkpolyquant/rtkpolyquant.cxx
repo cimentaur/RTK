@@ -141,9 +141,10 @@ int main(int argc, char * argv[])
   param.volOld = inputFilter->GetOutput();
   param.nIter = args_info.niterations_arg;
   param.nSplit = args_info.nsplit_arg;
-  param.stepSize = args_info.lambda_arg;
+  param.stepSize = args_info.lambda_arg*(float)param.nSplit;
   param.nProj = ctSystem.geom->GetGantryAngles().size();
-  param.accelerate = false;
+  param.accelerate = (bool)args_info.accelerate_flag;
+  param.up = 10;
   std::cout << "Found spectrum and it is " << args_info.spectrumfile_arg << std::endl;
   std::ifstream spectrumFile(args_info.spectrumfile_arg);
   // test file open   

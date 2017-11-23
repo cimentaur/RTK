@@ -8,13 +8,14 @@ option "output"      o "Output file name"                                      s
 option "niterations" n "Number of iterations"                                  int    no   default="5"
 option "time"        t "Records elapsed time during the process"               flag   off
 option "lambda"      l "Step size"                                    double no   default="0.3"
+option "gamma"       - "TV regularisation strength"                            double no   default="0"
 option "positivity"  - "Enforces positivity during the reconstruction"         flag   off
 option "input"     i "Input volume"              string          no
 option "nsplit" - "Number of subset divisions of the projection stack per iteration" int no default="1"
 option "spectrumfile" - "Text file containing normalised spectrum of the source" string yes
 option "kneefile" 		- "Text file containing Polyquant knee factors"						string yes
 option "nodisplaced"    - "Disable the displaced detector filter"              flag   off
-option "accelerate"   a "Employ FISTA like acceleration"                       flag   on
+option "accelerate"   a "Employ FISTA like acceleration"                       flag   off
 
 section "Phase gating"
 option "signal"       - "File containing the phase of each projection"                                              string              no

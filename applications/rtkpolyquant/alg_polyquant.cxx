@@ -62,7 +62,7 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
     stepSizeFilter->SetInput1(grad);
     derivUpdate->SetInput2(stepSizeFilter->GetOutput());
     derivUpdate->GetOutput()->SetRequestedRegion( largestRegion );
-    volNow = proj_nn(derivUpdate->GetOutput(),param.up);
+    volNow = proj_nn(derivUpdate->GetOutput(),param);
     volNow->SetRegions(largestRegion);
     volNow->SetOrigin(param.volOld->GetOrigin());
     volNow->SetSpacing(param.volOld->GetSpacing());
@@ -156,11 +156,21 @@ volType calc_subset_proj(paramType &param,std::vector<int> indArray)
   return paste->GetOutput();
 }
 
-volType proj_nn(volType in,float upValue)
+volType proj_nn(volType in,paramType &param)
 {
   thresholdType::Pointer threshFilt = thresholdType::New();
+  if (param.gamma > 0)
+  {
+    tvType::Pointer tvFilt = tvType::New();
+    tvFilt->SetInput(in);
+    tvFilt->SetNumberOfIterations(3);
+    tvFilt->SetGamma(param.gamma);
+    tvFilt->Update();
+    in = tvFilt->GetOutput();
+    in->DisconnectPipeline();
+  }
   threshFilt->SetOutsideValue(0);
-  threshFilt->ThresholdOutside(0,upValue);
+  threshFilt->ThresholdOutside(0,param.up);
   threshFilt->SetInput(in);
   threshFilt->Update();
   return threshFilt->GetOutput();

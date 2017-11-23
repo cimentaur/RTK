@@ -142,6 +142,7 @@ int main(int argc, char * argv[])
   param.nIter = args_info.niterations_arg;
   param.nSplit = args_info.nsplit_arg;
   param.stepSize = args_info.lambda_arg*(float)param.nSplit;
+  param.gamma = args_info.gamma_arg;
   param.nProj = ctSystem.geom->GetGantryAngles().size();
   param.accelerate = (bool)args_info.accelerate_flag;
   param.up = 10;

@@ -13,6 +13,7 @@
 // #include "rtkPhaseReader.h"
 #include "rtkThreeDCircularProjectionGeometryXMLFile.h"
 #include "rtkDisplacedDetectorImageFilter.h"
+#include "rtkTotalVariationDenoisingBPDQImageFilter.h"
 
 #include <itkTimeProbe.h>
 #include <itkImageFileWriter.h>
@@ -31,6 +32,7 @@
 
 // typedef itk::Image<float,3> volumeType projType;
 typedef itk::Image< float, 3 > OutputImageType;
+typedef itk::Image< itk::CovariantVector<float,3>,3 > gradImageType;
 typedef OutputImageType::Pointer volType;
 //typedef itk::Image< float, 3 > OutputImageType;
 typedef rtk::ThreeDCircularProjectionGeometry::Pointer geomType;
@@ -48,6 +50,7 @@ typedef itk::BinaryThresholdImageFilter<OutputImageType,OutputImageType> maskTyp
 typedef itk::ExpImageFilter<OutputImageType,OutputImageType> expType;
 typedef itk::DivideImageFilter<OutputImageType,OutputImageType,OutputImageType> divType;
 typedef itk::MaskImageFilter<OutputImageType,OutputImageType> maskingType;
+typedef rtk::TotalVariationDenoisingBPDQImageFilter<OutputImageType,gradImageType> tvType;
 																				 
 struct paramType
 {
@@ -57,6 +60,7 @@ struct paramType
   int nProj;
   float stepSize;
   float up;  // up is the maximum allowable value
+  float gamma;
   bool accelerate;
   volType volOld;
   volType recon;

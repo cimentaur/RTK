@@ -1,6 +1,7 @@
 #include "rtkpolyquant.h"
 #include "alg_polyquant.h"
 #include "calc_polyquant.h"
+#include "bit_reversal.h"
 
 void os_polyquant(paramType &param,ctSystemType ctSystem)
 {
@@ -48,6 +49,7 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
   	//subSetProbe.Reset();
   	subSetProbe.Start();
   	ind = (k%param.nSplit);
+  	ind = calc_bit_reversal(ind,param.nSplit);
   	// calculate a subset
     for (int j = 0; j<param.nProj/param.nSplit; j++)
     {
@@ -94,12 +96,6 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
   std::cout << std::endl;
   // Output gradient for testing
   param.recon = subSetParam.recon;
-}
-
-int bit_reversal(int index, int max)
-{
-	// TODO: apply bit reversal strategy
-	return index;
 }
 
 geomType calc_subset_geom(ctSystemType &ctSystem,std::vector<int> indArray)

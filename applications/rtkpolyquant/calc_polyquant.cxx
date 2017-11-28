@@ -31,7 +31,7 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   maskFilt->SetUpperThreshold(param.facKnee[1]);
   maskFilt->SetInsideValue(1);
   maskFilt->SetOutsideValue(0);
-  maskFilt->SetInput(param.recon);
+  maskFilt->SetInput(param.recon); // ???
   maskFilt->Update();
   ctSystem.forProj->SetInput(1,maskFilt->GetOutput());
   ctSystem.forProj->Update();
@@ -39,6 +39,7 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   constB->DisconnectPipeline();
   maskFilt->SetLowerThreshold(param.facKnee[1]);
   maskFilt->SetUpperThreshold(10);
+  maskFilt->Update();
   ctSystem.forProj->SetInput(1,maskFilt->GetOutput());
   ctSystem.forProj->Update();
   volType constC = ctSystem.forProj->GetOutput();
@@ -86,8 +87,8 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   	
   	tmpProjIter = multFilt->GetOutput();
   	tmpProjIter->DisconnectPipeline();
-  	addSpecProj->SetInput1(tmpProj);
-  	addSpecProj->SetInput2(tmpProjIter);
+  	addSpecProj->SetInput1(tmpProjIter);
+  	addSpecProj->SetInput2(tmpProj);
   	addSpecProj->Update();
   	tmpProj = addSpecProj->GetOutput();
   	tmpProj->DisconnectPipeline();
@@ -118,8 +119,6 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   	addDerivC->DisconnectPipeline();
   }
   
-  //std::cout << "Finished all the precorrection... on to derivative!" << std::endl;
-  	
   // Calculate the derivative factors
   
   divType::Pointer divFilt = divType::New();
@@ -146,7 +145,7 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   ctSystem.backProj->Update();
   maskingType::Pointer maskOutFilt = maskingType::New();
   maskFilt->SetLowerThreshold(0);
-  maskFilt->SetUpperThreshold(param.facKnee[0]);
+  maskFilt->SetUpperThreshold(param.facKnee[0]); // ???
   maskFilt->Update();
   maskOutFilt->SetInput(ctSystem.backProj->GetOutput());
   maskOutFilt->SetMaskImage(maskFilt->GetOutput());
@@ -172,7 +171,7 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   addOutFilt->Update();
   tmpOut = addOutFilt->GetOutput();
   tmpOut->DisconnectPipeline();
-  
+
   // Third output term
   multOutFilt->SetInput2(addDerivC);
   multOutFilt->Update();
@@ -183,13 +182,14 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   maskFilt->SetUpperThreshold(10);
   maskFilt->Update();
   maskOutFilt->SetInput(ctSystem.backProj->GetOutput());
-  maskOutFilt->SetMaskImage(maskOutFilt->GetOutput());
+  maskOutFilt->SetMaskImage(maskFilt->GetOutput());
   maskOutFilt->Update();
   addOutFilt->SetInput1(tmpOut);
   addOutFilt->SetInput2(maskOutFilt->GetOutput());
   addOutFilt->Update();
-  
-  return addOutFilt->GetOutput();
+  tmpOut = addOutFilt->GetOutput();
+  tmpOut->DisconnectPipeline();
+  return tmpOut;
 }
 
 volType calc_poly_projection(volType &projA,volType &projB,volType &projC,

@@ -15,9 +15,10 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
 	paramType subSetParam = param;
 	volType volNow = param.volOld;//->GetOutput();
 	subSetParam.recon = param.volOld;
-	std::cout << "Initialising measurements..." << std::endl;
+	std::cout << "Running Polyquant reconstruction..." << std::endl;
 	param.y->Update();
 	std::vector<int> indArray;
+
   for (int j = 0; j<param.nProj/param.nSplit; j++)
   {
   	indArray.push_back(j*param.nSplit);
@@ -38,27 +39,35 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
   OutputImageType::RegionType largestRegion = param.volOld->GetLargestPossibleRegion();
   largestRegion = param.volOld->GetLargestPossibleRegion();
   
+  if (param.nSplit == 1)
+  {
+    subSetSystem.forProj->SetGeometry(ctSystem.geom);
+    subSetSystem.backProj->SetGeometry(ctSystem.geom);
+  }
+  
   multiplyType::Pointer fistaMult = multiplyType::New();
   addType::Pointer fistaAdd = addType::New();
   subtractType::Pointer fistaSub = subtractType::New();
 	for (int k = 0; k < param.nIter; k++)
   {
   	derivUpdate->SetInput1(subSetParam.recon);
-    //std::cout << "Running iteration " << k+1 << " of " << param.nIter << std::endl;
-  	indArray.clear();
   	//subSetProbe.Reset();
   	subSetProbe.Start();
-  	ind = (k%param.nSplit);
-  	ind = calc_bit_reversal(ind,param.nSplit);
-  	// calculate a subset
-    for (int j = 0; j<param.nProj/param.nSplit; j++)
-    {
-    	indArray.push_back(ind+j*param.nSplit);
+  	if (param.nSplit > 1)
+  	{
+  	  indArray.clear();
+    	ind = (k%param.nSplit);
+    	ind = calc_bit_reversal(ind,param.nSplit);
+    	// calculate a subset
+      for (int j = 0; j<param.nProj/param.nSplit; j++)
+      {
+      	indArray.push_back(ind+j*param.nSplit);
+      }
+      subSetParam.y = calc_subset_proj(param,indArray);
+      subSetSystem.geom = calc_subset_geom(ctSystem,indArray);
+      subSetSystem.forProj->SetGeometry(subSetSystem.geom);
+      subSetSystem.backProj->SetGeometry(subSetSystem.geom);
     }
-    subSetParam.y = calc_subset_proj(param,indArray);
-    subSetSystem.geom = calc_subset_geom(ctSystem,indArray);
-    subSetSystem.forProj->SetGeometry(subSetSystem.geom);
-    subSetSystem.backProj->SetGeometry(subSetSystem.geom);
     grad = grad_polyquant(subSetParam,subSetSystem);
     grad->DisconnectPipeline();
     stepSizeFilter->SetInput1(grad);

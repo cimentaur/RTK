@@ -190,12 +190,12 @@ void print_stats(int iter,paramType &param,itk::TimeProbe &subSetProbe)
   for (int i = 0; i < barWidth; ++i) {
       if (i < pos) std::cout << "=";
       else if (i == pos) std::cout << ">";
-      else std::cout << " ";
+      else std::cout << ".";
   }
   float remain = subSetProbe.GetMean()*(float)(param.nIter-iter+1);
   std::cout << std::setprecision(3) << "] (" << iter+1 << "/" << param.nIter
             << ") avg_t=" << subSetProbe.GetMean()
             << "s tot_t=" << subSetProbe.GetTotal()
-            << "s rem_t=" << remain << "s \r";
+            << "s rem_t=" << remain << "s       \r";
   std::cout.flush();
 }

@@ -13,7 +13,7 @@ option "positivity"  - "Enforces positivity during the reconstruction"         f
 option "input"     i "Input volume"              string          no
 option "nsplit" - "Number of subset divisions of the projection stack per iteration" int no default="1"
 option "spectrumfile" - "Text file containing normalised spectrum of the source" string yes
-option "kneefile" 		- "Text file containing Polyquant knee factors"						string yes
+option "kneefile"     - "Text file containing Polyquant knee factors"            string yes
 option "nodisplaced"    - "Disable the displaced detector filter"              flag   off
 option "accelerate"   a "Employ FISTA like acceleration"                       flag   off
 option "step"      - "Step size along ray (for CudaRayCast only)"                double   no   default="1"

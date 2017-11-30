@@ -151,19 +151,19 @@ int main(int argc, char * argv[])
   // test file open   
   if (spectrumFile)
   {        
-	  float value;
-	  // read the elements in the file into a vector  
-	  while (spectrumFile >> value)
-	  {
-	    param.spectrum.push_back(value);
-	  }
-	  spectrumFile.close();
-	  //std::cout << "Found spectrum and it is " << param.spectrum << std::endl;
+    float value;
+    // read the elements in the file into a vector  
+    while (spectrumFile >> value)
+    {
+      param.spectrum.push_back(value);
+    }
+    spectrumFile.close();
+    //std::cout << "Found spectrum and it is " << param.spectrum << std::endl;
   }
   else
   {
-  	std::cout << "I cannot find the spectrum file .o0 FAILS!" << std::endl;
-  	return EXIT_FAILURE;
+    std::cout << "I cannot find the spectrum file .o0 FAILS!" << std::endl;
+    return EXIT_FAILURE;
   }
   std::cout << "Found knee and it is " << args_info.kneefile_arg << std::endl;
   std::cout << "Spectrum length is " << param.spectrum.size() << std::endl;
@@ -178,24 +178,24 @@ int main(int argc, char * argv[])
       kneeFile >> value;
       param.facKnee.push_back(value);
     }      
-	  // read the elements in the file into a vector  
-	  for (int k = 0; k<param.spectrum.size(); k++)
-	  {
-	    std::vector<float> row; 
+    // read the elements in the file into a vector  
+    for (int k = 0; k<param.spectrum.size(); k++)
+    {
+      std::vector<float> row; 
       for (int j = 0; j<5; j++)
       {
         kneeFile >> value;
         row.push_back(value);
       }
       param.knee.push_back(row);
-	  }
-	  //std::cout << "Found knee and it is " << param.knee << std::endl;
-	  kneeFile.close();
+    }
+    //std::cout << "Found knee and it is " << param.knee << std::endl;
+    kneeFile.close();
   }
   else
   {
-  	std::cout << "I cannot find the spectrum file .o0 FAILS!" << std::endl;
-  	return EXIT_FAILURE;
+    std::cout << "I cannot find the spectrum file .o0 FAILS!" << std::endl;
+    return EXIT_FAILURE;
   }  
 
   itk::TimeProbe totalTimeProbe;

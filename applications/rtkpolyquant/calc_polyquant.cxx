@@ -79,44 +79,44 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   volType tmpProjIter;
   for (int k = 1; k<param.spectrum.size(); k++)
   {
-  	expFilt->SetInput(calc_poly_projection(projA,projB,projC,constB,constC,param,k));
-  	expFilt->Update();
-  	multFilt->SetInput1(expFilt->GetOutput());
-  	multFilt->SetConstant2(param.spectrum[k]);
-  	multFilt->Update();
-  	
-  	tmpProjIter = multFilt->GetOutput();
-  	tmpProjIter->DisconnectPipeline();
-  	addSpecProj->SetInput1(tmpProjIter);
-  	addSpecProj->SetInput2(tmpProj);
-  	addSpecProj->Update();
-  	tmpProj = addSpecProj->GetOutput();
-  	tmpProj->DisconnectPipeline();
-  	// First derivative value
-  	multFilt->SetInput1(tmpProjIter);
-  	multFilt->SetConstant2(param.knee[k][0]);
-  	multFilt->Update();
-  	addSpecProj->SetInput1(multFilt->GetOutput());
-  	addSpecProj->SetInput2(addDerivA);
-  	addSpecProj->Update();
-  	addDerivA = addSpecProj->GetOutput();
-  	addDerivA->DisconnectPipeline();
-  	// Second derivative value
-  	multFilt->SetConstant2(param.knee[k][1]);
-  	multFilt->Update();
-  	addSpecProj->SetInput1(multFilt->GetOutput());
-  	addSpecProj->SetInput2(addDerivB);
-  	addSpecProj->Update();
-  	addDerivB = addSpecProj->GetOutput();
-  	addDerivB->DisconnectPipeline();
-  	// Third derivative value
-  	multFilt->SetConstant2(param.knee[k][3]);
-  	multFilt->Update();
-  	addSpecProj->SetInput1(multFilt->GetOutput());
-  	addSpecProj->SetInput2(addDerivC);
-  	addSpecProj->Update();
-  	addDerivC = addSpecProj->GetOutput();
-  	addDerivC->DisconnectPipeline();
+    expFilt->SetInput(calc_poly_projection(projA,projB,projC,constB,constC,param,k));
+    expFilt->Update();
+    multFilt->SetInput1(expFilt->GetOutput());
+    multFilt->SetConstant2(param.spectrum[k]);
+    multFilt->Update();
+    
+    tmpProjIter = multFilt->GetOutput();
+    tmpProjIter->DisconnectPipeline();
+    addSpecProj->SetInput1(tmpProjIter);
+    addSpecProj->SetInput2(tmpProj);
+    addSpecProj->Update();
+    tmpProj = addSpecProj->GetOutput();
+    tmpProj->DisconnectPipeline();
+    // First derivative value
+    multFilt->SetInput1(tmpProjIter);
+    multFilt->SetConstant2(param.knee[k][0]);
+    multFilt->Update();
+    addSpecProj->SetInput1(multFilt->GetOutput());
+    addSpecProj->SetInput2(addDerivA);
+    addSpecProj->Update();
+    addDerivA = addSpecProj->GetOutput();
+    addDerivA->DisconnectPipeline();
+    // Second derivative value
+    multFilt->SetConstant2(param.knee[k][1]);
+    multFilt->Update();
+    addSpecProj->SetInput1(multFilt->GetOutput());
+    addSpecProj->SetInput2(addDerivB);
+    addSpecProj->Update();
+    addDerivB = addSpecProj->GetOutput();
+    addDerivB->DisconnectPipeline();
+    // Third derivative value
+    multFilt->SetConstant2(param.knee[k][3]);
+    multFilt->Update();
+    addSpecProj->SetInput1(multFilt->GetOutput());
+    addSpecProj->SetInput2(addDerivC);
+    addSpecProj->Update();
+    addDerivC = addSpecProj->GetOutput();
+    addDerivC->DisconnectPipeline();
   }
   
   // Calculate the derivative factors
@@ -128,17 +128,17 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
   subtractType::Pointer subFilt = subtractType::New();
   subFilt->SetInput1(divFilt->GetOutput());
   subFilt->SetConstant2(1);
-	subFilt->Update();
+  subFilt->Update();
   
   OutputImageType::RegionType largestRegion = param.recon->GetLargestPossibleRegion();
   // First output term
-	multiplyType::Pointer multOutFilt = multiplyType::New();
+  multiplyType::Pointer multOutFilt = multiplyType::New();
   multOutFilt->SetInput1(subFilt->GetOutput());
   multOutFilt->SetInput2(addDerivA);
   multOutFilt->Update();
   //ddFilt->SetOffsets(319.614,319.614);
   //ddFilt->SetPadOnTruncatedSide(false);
-	ddType::Pointer ddFilt = ddType::New();
+  ddType::Pointer ddFilt = ddType::New();
   ddFilt->SetInput(multOutFilt->GetOutput());
   ddFilt->SetGeometry(ctSystem.geom);
   ctSystem.backProj->SetInput(1,ddFilt->GetOutput());
@@ -193,46 +193,46 @@ volType grad_polyquant(paramType &param,ctSystemType &ctSystem)
 }
 
 volType calc_poly_projection(volType &projA,volType &projB,volType &projC,
-            								 volType &constB,volType &constC,paramType &param,int enInd)
+                             volType &constB,volType &constC,paramType &param,int enInd)
 {
-	multiplyType::Pointer multFilt = multiplyType::New();
-	addType::Pointer addFilt = addType::New();
-	multFilt->SetInput1(projA);
-	multFilt->SetConstant2(-param.knee[enInd][0]);
-	multFilt->Update();
-	volType tmpProj = multFilt->GetOutput();
-	tmpProj->DisconnectPipeline();
-	multFilt->SetInput1(projB);
-	multFilt->SetConstant2(-param.knee[enInd][1]);
-	multFilt->Update();
-	addFilt->SetInput1(tmpProj);
-	addFilt->SetInput2(multFilt->GetOutput());
-	addFilt->Update();
-	tmpProj = addFilt->GetOutput();
-	tmpProj->DisconnectPipeline();
-	multFilt->SetInput1(constB);
-	multFilt->SetConstant2(-param.knee[enInd][2]);
-	multFilt->Update();
-	addFilt->SetInput1(tmpProj);
-	addFilt->SetInput2(multFilt->GetOutput());
-	addFilt->Update();
-	tmpProj = addFilt->GetOutput();
-	tmpProj->DisconnectPipeline();
-	multFilt->SetInput1(projC);
-	multFilt->SetConstant2(-param.knee[enInd][3]);
-	multFilt->Update();
-	addFilt->SetInput1(tmpProj);
-	addFilt->SetInput2(multFilt->GetOutput());
-	addFilt->Update();
-	tmpProj = addFilt->GetOutput();
-	tmpProj->DisconnectPipeline();
-	multFilt->SetInput1(constC);
-	multFilt->SetConstant2(-param.knee[enInd][4]);
-	multFilt->Update();
-	addFilt->SetInput1(tmpProj);
-	addFilt->SetInput2(multFilt->GetOutput());
-	addFilt->Update();
-	tmpProj = addFilt->GetOutput();
-	tmpProj->DisconnectPipeline();
-	return tmpProj;
+  multiplyType::Pointer multFilt = multiplyType::New();
+  addType::Pointer addFilt = addType::New();
+  multFilt->SetInput1(projA);
+  multFilt->SetConstant2(-param.knee[enInd][0]);
+  multFilt->Update();
+  volType tmpProj = multFilt->GetOutput();
+  tmpProj->DisconnectPipeline();
+  multFilt->SetInput1(projB);
+  multFilt->SetConstant2(-param.knee[enInd][1]);
+  multFilt->Update();
+  addFilt->SetInput1(tmpProj);
+  addFilt->SetInput2(multFilt->GetOutput());
+  addFilt->Update();
+  tmpProj = addFilt->GetOutput();
+  tmpProj->DisconnectPipeline();
+  multFilt->SetInput1(constB);
+  multFilt->SetConstant2(-param.knee[enInd][2]);
+  multFilt->Update();
+  addFilt->SetInput1(tmpProj);
+  addFilt->SetInput2(multFilt->GetOutput());
+  addFilt->Update();
+  tmpProj = addFilt->GetOutput();
+  tmpProj->DisconnectPipeline();
+  multFilt->SetInput1(projC);
+  multFilt->SetConstant2(-param.knee[enInd][3]);
+  multFilt->Update();
+  addFilt->SetInput1(tmpProj);
+  addFilt->SetInput2(multFilt->GetOutput());
+  addFilt->Update();
+  tmpProj = addFilt->GetOutput();
+  tmpProj->DisconnectPipeline();
+  multFilt->SetInput1(constC);
+  multFilt->SetConstant2(-param.knee[enInd][4]);
+  multFilt->Update();
+  addFilt->SetInput1(tmpProj);
+  addFilt->SetInput2(multFilt->GetOutput());
+  addFilt->Update();
+  tmpProj = addFilt->GetOutput();
+  tmpProj->DisconnectPipeline();
+  return tmpProj;
 }

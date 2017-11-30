@@ -5,23 +5,23 @@
 
 void os_polyquant(paramType &param,ctSystemType ctSystem)
 {
-	itk::TimeProbe subSetProbe;
-	std::cout << "Number of iterations = " << param.nIter << std::endl;
-	std::cout << "Number of projections = " << param.nProj << std::endl;
-	volType ySub;
-	int ind; // = sizeof(indArray)/sizeof(*indArray);
-	float t = 1; float t1;
-	ctSystemType subSetSystem = ctSystem;
-	paramType subSetParam = param;
-	volType volNow = param.volOld;//->GetOutput();
-	subSetParam.recon = param.volOld;
-	std::cout << "Running Polyquant reconstruction..." << std::endl;
-	param.y->Update();
-	std::vector<int> indArray;
+  itk::TimeProbe subSetProbe;
+  std::cout << "Number of iterations = " << param.nIter << std::endl;
+  std::cout << "Number of projections = " << param.nProj << std::endl;
+  volType ySub;
+  int ind; // = sizeof(indArray)/sizeof(*indArray);
+  float t = 1; float t1;
+  ctSystemType subSetSystem = ctSystem;
+  paramType subSetParam = param;
+  volType volNow = param.volOld;//->GetOutput();
+  subSetParam.recon = param.volOld;
+  std::cout << "Running Polyquant reconstruction..." << std::endl;
+  param.y->Update();
+  std::vector<int> indArray;
 
   for (int j = 0; j<param.nProj/param.nSplit; j++)
   {
-  	indArray.push_back(j*param.nSplit);
+    indArray.push_back(j*param.nSplit);
   }
   volType emptyProj = calc_subset_proj(param,indArray);
   
@@ -31,7 +31,7 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
   multFilter->Update();
   subSetSystem.forProj->SetInput(multFilter->GetOutput());
   //subSetSystem.forProj->ReleaseDataFlagOn();
-	subSetSystem.backProj->SetInput(param.volOld);
+  subSetSystem.backProj->SetInput(param.volOld);
   volType grad;
   subtractType::Pointer derivUpdate = subtractType::New();
   multiplyType::Pointer stepSizeFilter = multiplyType::New();
@@ -48,20 +48,20 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
   multiplyType::Pointer fistaMult = multiplyType::New();
   addType::Pointer fistaAdd = addType::New();
   subtractType::Pointer fistaSub = subtractType::New();
-	for (int k = 0; k < param.nIter; k++)
+  for (int k = 0; k < param.nIter; k++)
   {
-  	derivUpdate->SetInput1(subSetParam.recon);
-  	//subSetProbe.Reset();
-  	subSetProbe.Start();
-  	if (param.nSplit > 1)
-  	{
-  	  indArray.clear();
-    	ind = (k%param.nSplit);
-    	ind = calc_bit_reversal(ind,param.nSplit);
-    	// calculate a subset
+    derivUpdate->SetInput1(subSetParam.recon);
+    //subSetProbe.Reset();
+    subSetProbe.Start();
+    if (param.nSplit > 1)
+    {
+      indArray.clear();
+      ind = (k%param.nSplit);
+      ind = calc_bit_reversal(ind,param.nSplit);
+      // calculate a subset
       for (int j = 0; j<param.nProj/param.nSplit; j++)
       {
-      	indArray.push_back(ind+j*param.nSplit);
+        indArray.push_back(ind+j*param.nSplit);
       }
       subSetParam.y = calc_subset_proj(param,indArray);
       subSetSystem.geom = calc_subset_geom(ctSystem,indArray);
@@ -79,28 +79,28 @@ void os_polyquant(paramType &param,ctSystemType ctSystem)
     volNow->SetSpacing(param.volOld->GetSpacing());
     subSetProbe.Stop();
     print_stats(k,param,subSetProbe);
-  	//std::cout << "\tCompleted in " << subSetProbe.GetTotal()
-  	//															 << subSetProbe.GetUnit() << std::endl;
-  	if (param.accelerate)
-  	{
-  	  t1 = 0.5*(1+sqrt(1+4*t*t));
-  	  fistaSub->SetInput1(volNow);
-  	  fistaSub->SetInput2(subSetParam.volOld);
-  	  fistaSub->Update();
-  	  fistaMult->SetInput1(fistaSub->GetOutput());
-  	  fistaMult->SetConstant2((t-1)/t1);
-  	  fistaMult->Update();
-  	  fistaAdd->SetInput1(volNow);
-  	  fistaAdd->SetInput2(fistaMult->GetOutput());
-  	  fistaAdd->Update();
+    //std::cout << "\tCompleted in " << subSetProbe.GetTotal()
+    //                               << subSetProbe.GetUnit() << std::endl;
+    if (param.accelerate)
+    {
+      t1 = 0.5*(1+sqrt(1+4*t*t));
+      fistaSub->SetInput1(volNow);
+      fistaSub->SetInput2(subSetParam.volOld);
+      fistaSub->Update();
+      fistaMult->SetInput1(fistaSub->GetOutput());
+      fistaMult->SetConstant2((t-1)/t1);
+      fistaMult->Update();
+      fistaAdd->SetInput1(volNow);
+      fistaAdd->SetInput2(fistaMult->GetOutput());
+      fistaAdd->Update();
       subSetParam.recon = fistaAdd->GetOutput();
       subSetParam.volOld = volNow;
       t = t1;
-  	}
-  	else
-  	{
-  	  subSetParam.recon = volNow;
-  	}			 				
+    }
+    else
+    {
+      subSetParam.recon = volNow;
+    }               
   }
   std::cout << std::endl;
   // Output gradient for testing
@@ -120,7 +120,7 @@ geomType calc_subset_geom(ctSystemType &ctSystem,std::vector<int> indArray)
 
 volType calc_subset_proj(paramType &param,std::vector<int> indArray)
 {
-	typedef rtk::ConstantImageSource< OutputImageType > SourceType;
+  typedef rtk::ConstantImageSource< OutputImageType > SourceType;
   SourceType::Pointer source = SourceType::New();
   source->SetInformationFromImage(param.y);
   OutputImageType::SizeType outputSize = param.y->GetLargestPossibleRegion().GetSize();

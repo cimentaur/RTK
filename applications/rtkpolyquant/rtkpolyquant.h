@@ -51,7 +51,7 @@ typedef itk::ExpImageFilter<OutputImageType,OutputImageType> expType;
 typedef itk::DivideImageFilter<OutputImageType,OutputImageType,OutputImageType> divType;
 typedef itk::MaskImageFilter<OutputImageType,OutputImageType> maskingType;
 typedef rtk::TotalVariationDenoisingBPDQImageFilter<OutputImageType,gradImageType> tvType;
-																				 
+                                         
 struct paramType
 {
   int nIter;

@@ -24,42 +24,44 @@
 #include <itkImageFileWriter.h>
 #include <itkImageFileReader.h>
 
-int main(int argc, char * argv[])
+int
+main(int argc, char * argv[])
 {
   GGO(rtkspectraldenoiseprojections, args_info);
 
-  typedef float OutputPixelType;
-  const unsigned int Dimension = 3;
-  typedef itk::VectorImage< OutputPixelType, Dimension > OutputImageType;
+  using OutputPixelType = float;
+  constexpr unsigned int Dimension = 3;
+  using OutputImageType = itk::VectorImage<OutputPixelType, Dimension>;
 
   // Reader
-  typedef itk::ImageFileReader<  OutputImageType > ReaderType;
+  using ReaderType = itk::ImageFileReader<OutputImageType>;
   ReaderType::Pointer reader = ReaderType::New();
-  reader->SetFileName( args_info.input_arg );
+  reader->SetFileName(args_info.input_arg);
 
   // Remove aberrant pixels
-  typedef rtk::ConditionalMedianImageFilter<OutputImageType> MedianType;
+  using MedianType = rtk::ConditionalMedianImageFilter<OutputImageType>;
   MedianType::Pointer median = MedianType::New();
   median->SetThresholdMultiplier(args_info.multiplier_arg);
   MedianType::MedianRadiusType radius;
-  if(args_info.radius_given)
+  if (args_info.radius_given)
   {
-  radius.Fill(args_info.radius_arg[0]);
-  for(unsigned int i=0; i<args_info.radius_given; i++)
-    radius[i] = args_info.radius_arg[i];
+    radius.Fill(args_info.radius_arg[0]);
+    for (unsigned int i = 0; i < args_info.radius_given; i++)
+      radius[i] = args_info.radius_arg[i];
   }
   median->SetRadius(radius);
   median->SetInput(reader->GetOutput());
 
   // Write
-  typedef itk::ImageFileWriter<  OutputImageType > WriterType;
+  using WriterType = itk::ImageFileWriter<OutputImageType>;
   WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName( args_info.output_arg );
-  writer->SetInput( median->GetOutput() );
-//  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->UpdateOutputInformation() )
-//  writer->SetNumberOfStreamDivisions( 1 + reader->GetOutput()->GetLargestPossibleRegion().GetNumberOfPixels() / (1024*1024*4) );
+  writer->SetFileName(args_info.output_arg);
+  writer->SetInput(median->GetOutput());
+  //  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->UpdateOutputInformation() )
+  //  writer->SetNumberOfStreamDivisions( 1 + reader->GetOutput()->GetLargestPossibleRegion().GetNumberOfPixels() /
+  //  (1024*1024*4) );
 
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(writer->Update())
 
   return EXIT_SUCCESS;
 }

@@ -28,61 +28,56 @@
 #include <itkImageFileWriter.h>
 
 
-int main(int argc, char * argv[])
+int
+main(int argc, char * argv[])
 {
   GGO(rtkdrawshepploganphantom, args_info);
 
-  typedef float OutputPixelType;
-  const unsigned int Dimension = 3;
+  using OutputPixelType = float;
+  constexpr unsigned int Dimension = 3;
 
-  typedef itk::Image< OutputPixelType, Dimension > OutputImageType;
+  using OutputImageType = itk::Image<OutputPixelType, Dimension>;
 
   // Create a stack of empty projection images
-  typedef rtk::ConstantImageSource< OutputImageType > ConstantImageSourceType;
+  using ConstantImageSourceType = rtk::ConstantImageSource<OutputImageType>;
   ConstantImageSourceType::Pointer constantImageSource = ConstantImageSourceType::New();
-  rtk::SetConstantImageSourceFromGgo<ConstantImageSourceType, args_info_rtkdrawshepploganphantom>(constantImageSource, args_info);
+  rtk::SetConstantImageSourceFromGgo<ConstantImageSourceType, args_info_rtkdrawshepploganphantom>(constantImageSource,
+                                                                                                  args_info);
 
   // Create a reference object (in this case a 3D phantom reference).
-  typedef rtk::DrawSheppLoganFilter<OutputImageType, OutputImageType> DSLType;
+  using DSLType = rtk::DrawSheppLoganFilter<OutputImageType, OutputImageType>;
   DSLType::VectorType offset(0.);
   DSLType::VectorType scale;
-  if(args_info.offset_given)
-    {
-    offset[0] = args_info.offset_arg[0];
-    offset[1] = args_info.offset_arg[1];
-    offset[2] = args_info.offset_arg[2];
-    }
+  for (unsigned int i = 0; i < std::min(args_info.offset_given, Dimension); i++)
+    offset[i] = args_info.offset_arg[i];
   scale.Fill(args_info.phantomscale_arg[0]);
-  if(args_info.phantomscale_given)
-    {
-    for(unsigned int i=0; i<vnl_math_min(args_info.phantomscale_given, Dimension); i++)
-      scale[i] = args_info.phantomscale_arg[i];
-    }
+  for (unsigned int i = 0; i < std::min(args_info.phantomscale_given, Dimension); i++)
+    scale[i] = args_info.phantomscale_arg[i];
   DSLType::Pointer dsl = DSLType::New();
-  dsl->SetPhantomScale( scale );
-  dsl->SetInput( constantImageSource->GetOutput() );
+  dsl->SetPhantomScale(scale);
+  dsl->SetInput(constantImageSource->GetOutput());
   dsl->SetOriginOffset(offset);
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( dsl->Update() )
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(dsl->Update())
 
   // Add noise
   OutputImageType::Pointer output = dsl->GetOutput();
-  if(args_info.noise_given)
-    {
-    typedef rtk::AdditiveGaussianNoiseImageFilter< OutputImageType > NIFType;
-    NIFType::Pointer noisy=NIFType::New();
-    noisy->SetInput( output );
-    noisy->SetMean( 0.0 );
-    noisy->SetStandardDeviation( args_info.noise_arg );
-    TRY_AND_EXIT_ON_ITK_EXCEPTION( noisy->Update() )
+  if (args_info.noise_given)
+  {
+    using NIFType = rtk::AdditiveGaussianNoiseImageFilter<OutputImageType>;
+    NIFType::Pointer noisy = NIFType::New();
+    noisy->SetInput(output);
+    noisy->SetMean(0.0);
+    noisy->SetStandardDeviation(args_info.noise_arg);
+    TRY_AND_EXIT_ON_ITK_EXCEPTION(noisy->Update())
     output = noisy->GetOutput();
-    }
+  }
 
   // Write
-  typedef itk::ImageFileWriter< OutputImageType > WriterType;
+  using WriterType = itk::ImageFileWriter<OutputImageType>;
   WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName( args_info.output_arg );
-  writer->SetInput( output );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
+  writer->SetFileName(args_info.output_arg);
+  writer->SetInput(output);
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(writer->Update())
 
   return EXIT_SUCCESS;
 }

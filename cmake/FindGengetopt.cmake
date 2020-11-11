@@ -1,27 +1,27 @@
-
 # Attempt to find gengetopt. If not found, compile it.
-find_program(GENGETOPT gengetopt)
-if ((GENGETOPT STREQUAL "GENGETOPT-NOTFOUND") OR (GENGETOPT STREQUAL ""))
-  get_filename_component(CLITK_CMAKE_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
-  add_subdirectory(${CLITK_CMAKE_DIR}/../utilities/gengetopt ${CMAKE_CURRENT_BINARY_DIR}/gengetopt)
-else()
-  if(EXISTS ${GENGETOPT})
-    add_executable(gengetopt IMPORTED)
-    set_property(TARGET gengetopt PROPERTY IMPORTED_LOCATION ${GENGETOPT})
+if (NOT TARGET gengetopt)
+  find_program(GENGETOPT gengetopt)
+  if ((GENGETOPT STREQUAL "GENGETOPT-NOTFOUND") OR (GENGETOPT STREQUAL ""))
+    get_filename_component(CLITK_CMAKE_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
+    add_subdirectory(${CLITK_CMAKE_DIR}/../utilities/gengetopt ${CMAKE_CURRENT_BINARY_DIR}/gengetopt)
   else()
-	  set(GENGETOPT "GENGETOPT-NOTFOUND" CACHE FILEPATH "Path to a program." FORCE)
-    message(FATAL_ERROR "No gengetopt executable found at the specified location")
+    if(EXISTS ${GENGETOPT})
+      add_executable(gengetopt IMPORTED)
+      set_property(TARGET gengetopt PROPERTY IMPORTED_LOCATION ${GENGETOPT})
+    else()
+      set(GENGETOPT "GENGETOPT-NOTFOUND" CACHE FILEPATH "Path to a program." FORCE)
+      message(FATAL_ERROR "No gengetopt executable found at the specified location")
+    endif()
   endif()
 endif()
 
 # Create a cmake script to cat a list of files
-file(WRITE ${CMAKE_BINARY_DIR}/cat.cmake "
-file(WRITE \${OUTPUT} \"\")
-set(LIST_INPUTS \${INPUTS})
-separate_arguments(LIST_INPUTS)
-foreach(INPUT \${LIST_INPUTS})
-  file(READ \${INPUT} CONTENT)
-  file(APPEND \${OUTPUT} \"\${CONTENT}\")
+file(WRITE "${CMAKE_BINARY_DIR}/cat.cmake" "
+file(WRITE \"\${OUTPUT}\" \"\")
+foreach(INPUT \${INPUTS})
+  string(REPLACE \";\" \" \" INPUT \"\${INPUT}\")
+  file(READ \"\${INPUT}\" CONTENT)
+  file(APPEND \"\${OUTPUT}\" \"\${CONTENT}\")
 endforeach()
 ")
 
@@ -33,17 +33,18 @@ macro (WRAP_GGO GGO_SRCS)
   # Convert list of a file in a list with absolute file names
   foreach(GGO_FILE ${ARGN})
     get_filename_component(GGO_FILE_ABS ${GGO_FILE} ABSOLUTE)
-    list(APPEND GGO_FILES_ABS ${GGO_FILE_ABS})
+    list(APPEND GGO_FILES_ABS "${GGO_FILE_ABS}")
   endforeach()
 
   # Append to a new ggo file containing all files
   list(GET GGO_FILES_ABS 0 FIRST_GGO_FILE)
   get_filename_component(FIRST_GGO_BASEFILENAME ${FIRST_GGO_FILE} NAME)
+  separate_arguments(GGO_FILES_ABS_LIST NATIVE_COMMAND "${GGO_FILES_ABS}")
   add_custom_command(
       OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${FIRST_GGO_BASEFILENAME}"
-      COMMAND ${CMAKE_COMMAND} -D INPUTS="${GGO_FILES_ABS}"
+      COMMAND ${CMAKE_COMMAND} -D INPUTS="${GGO_FILES_ABS_LIST}"
                                -D OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/${FIRST_GGO_BASEFILENAME}
-                               -P ${CMAKE_BINARY_DIR}/cat.cmake
+                               -P "${CMAKE_BINARY_DIR}/cat.cmake"
       DEPENDS ${GGO_FILES_ABS}
   )
   set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${FIRST_GGO_BASEFILENAME} PROPERTIES GENERATED TRUE)
@@ -77,6 +78,8 @@ macro (WRAP_GGO GGO_SRCS)
     endif()
   endif()
   if(MSVC)
-    set_source_files_properties(${${GGO_SRCS}} PROPERTIES COMPILE_FLAGS "/W0")
+    # Disable double to float truncation warning as gengetopt cannot append "f"
+    # to force default numeric float values in the .ggo config file
+    set_source_files_properties(${${GGO_SRCS}} PROPERTIES COMPILE_FLAGS "/wd4305")
   endif()
 endmacro ()

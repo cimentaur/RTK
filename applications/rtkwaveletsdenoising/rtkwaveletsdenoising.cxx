@@ -25,22 +25,23 @@
 #include <string>
 #include <sstream>
 
-int main(int argc, char * argv[])
+int
+main(int argc, char * argv[])
 {
   GGO(rtkwaveletsdenoising, args_info);
 
-  typedef float OutputPixelType;
-  const unsigned int Dimension = 3;
+  using OutputPixelType = float;
+  constexpr unsigned int Dimension = 3;
 
-  typedef itk::Image< OutputPixelType, Dimension > OutputImageType;
+  using OutputImageType = itk::Image<OutputPixelType, Dimension>;
 
   // Read the input image
-  typedef itk::ImageFileReader<OutputImageType> ReaderType;
+  using ReaderType = itk::ImageFileReader<OutputImageType>;
   ReaderType::Pointer reader = ReaderType::New();
   reader->SetFileName(args_info.input_arg);
 
   // Create the denoising filter
-  typedef rtk::DeconstructSoftThresholdReconstructImageFilter<OutputImageType> WaveletsSoftThresholdFilterType;
+  using WaveletsSoftThresholdFilterType = rtk::DeconstructSoftThresholdReconstructImageFilter<OutputImageType>;
   WaveletsSoftThresholdFilterType::Pointer wst = WaveletsSoftThresholdFilterType::New();
   wst->SetInput(reader->GetOutput());
   wst->SetOrder(args_info.order_arg);
@@ -48,11 +49,11 @@ int main(int argc, char * argv[])
   wst->SetNumberOfLevels(args_info.level_arg);
 
   // Write reconstruction
-  typedef itk::ImageFileWriter<OutputImageType> WriterType;
+  using WriterType = itk::ImageFileWriter<OutputImageType>;
   WriterType::Pointer writer = WriterType::New();
-  writer->SetInput( wst->GetOutput() );
+  writer->SetInput(wst->GetOutput());
   writer->SetFileName(args_info.output_arg);
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(writer->Update())
 
   return EXIT_SUCCESS;
 }

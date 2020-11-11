@@ -92,8 +92,8 @@ struct Header
 
 _static char *address __OF((void *addr));
 _static int TimeToCheck __OF((void));
-_static int CheckBlock __OF((struct Header *h, char *file, unsigned long line));
-_static int CheckPointer __OF((unsigned char *ptr, unsigned long size, char *file, unsigned long line));
+_static int CheckBlock __OF((struct Header *h, const char *file, unsigned long line));
+_static int CheckPointer __OF((unsigned char *ptr, unsigned long size, const char *file, unsigned long line));
 _static int CheckFortification __OF((unsigned char *ptr, unsigned char value, size_t size));
 _static void SetFortification __OF((unsigned char *ptr, unsigned char value, size_t size));
 _static void OutputFortification __OF((unsigned char *ptr, unsigned char value, size_t size));
@@ -1374,7 +1374,7 @@ static void MakeHeaderValid(struct Header *h)
  */
 static int ChecksumHeader(struct Header *h)
 {
-	register int c, checksum, *p;
+	int c, checksum, *p;
 
 	for(c = 0, checksum = 0, p = (int *)h; c < sizeof(struct Header)/sizeof(int); c++)
 		checksum += *p++;

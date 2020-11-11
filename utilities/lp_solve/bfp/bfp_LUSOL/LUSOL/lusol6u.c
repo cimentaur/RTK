@@ -94,18 +94,20 @@ Finish:
 /* Solve U w = v based on column-based version of U, constructed by LU1U0 */
 void LU6U0_v(LUSOLrec *LUSOL, LUSOLmat *mat, REAL V[], REAL W[], int NZidx[], int *INFORM)
 {
+  (void)NZidx;
 #ifdef DoTraceU0
   REAL TEMP;
 #endif
   int  LEN, I, K, L, L1, NRANK, NRANK1, KLAST;
   REAL SMALL;
-  register REAL T;
+  REAL T;
 #if (defined xxLUSOLFastSolve) && !(defined DoTraceU0)
   REAL *aptr;
   int  *jptr;
 #else
   int  J;
 #endif
+  (void)NZidx;
 
   NRANK = LUSOL->luparm[LUSOL_IP_RANK_U];
   SMALL = LUSOL->parmlu[LUSOL_RP_ZEROTOLERANCE];

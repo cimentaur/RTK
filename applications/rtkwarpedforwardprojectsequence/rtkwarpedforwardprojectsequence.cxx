@@ -27,102 +27,80 @@
 
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
-#include <itkTimeProbe.h>
 
-int main(int argc, char * argv[])
+int
+main(int argc, char * argv[])
 {
   GGO(rtkwarpedforwardprojectsequence, args_info);
 
-  typedef float OutputPixelType;
-  typedef itk::CovariantVector< OutputPixelType, 3 > DVFVectorType;
+  using OutputPixelType = float;
+  using DVFVectorType = itk::CovariantVector<OutputPixelType, 3>;
 
 #ifdef RTK_USE_CUDA
-  typedef itk::CudaImage< OutputPixelType, 4 >  VolumeSeriesType;
-  typedef itk::CudaImage< OutputPixelType, 3 >  ProjectionStackType;
-  typedef itk::CudaImage<DVFVectorType, VolumeSeriesType::ImageDimension> DVFSequenceImageType;
-  typedef itk::CudaImage<DVFVectorType, VolumeSeriesType::ImageDimension - 1> DVFImageType;
+  using VolumeSeriesType = itk::CudaImage<OutputPixelType, 4>;
+  using ProjectionStackType = itk::CudaImage<OutputPixelType, 3>;
+  using DVFSequenceImageType = itk::CudaImage<DVFVectorType, VolumeSeriesType::ImageDimension>;
 #else
-  typedef itk::Image< OutputPixelType, 4 > VolumeSeriesType;
-  typedef itk::Image< OutputPixelType, 3 > ProjectionStackType;
-  typedef itk::Image<DVFVectorType, VolumeSeriesType::ImageDimension> DVFSequenceImageType;
-  typedef itk::Image<DVFVectorType, VolumeSeriesType::ImageDimension - 1> DVFImageType;
+  using VolumeSeriesType = itk::Image<OutputPixelType, 4>;
+  using ProjectionStackType = itk::Image<OutputPixelType, 3>;
+  using DVFSequenceImageType = itk::Image<DVFVectorType, VolumeSeriesType::ImageDimension>;
 #endif
-  typedef ProjectionStackType                   VolumeType;
-  typedef itk::ImageFileReader<  DVFSequenceImageType > DVFReaderType;
+  using DVFReaderType = itk::ImageFileReader<DVFSequenceImageType>;
 
   // Create a stack of empty projection images
-  typedef rtk::ConstantImageSource< ProjectionStackType > ConstantImageSourceType;
+  using ConstantImageSourceType = rtk::ConstantImageSource<ProjectionStackType>;
   ConstantImageSourceType::Pointer constantImageSource = ConstantImageSourceType::New();
-  rtk::SetConstantImageSourceFromGgo<ConstantImageSourceType, args_info_rtkwarpedforwardprojectsequence>(constantImageSource, args_info);
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( constantImageSource->Update() )
+  rtk::SetConstantImageSourceFromGgo<ConstantImageSourceType, args_info_rtkwarpedforwardprojectsequence>(
+    constantImageSource, args_info);
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(constantImageSource->Update())
 
   // Read the input volume sequence
-  typedef itk::ImageFileReader<  VolumeSeriesType > volumeSeriesReaderType;
+  using volumeSeriesReaderType = itk::ImageFileReader<VolumeSeriesType>;
   volumeSeriesReaderType::Pointer volumeSeriesReader = volumeSeriesReaderType::New();
-  volumeSeriesReader->SetFileName( args_info.input_arg );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( volumeSeriesReader->Update() )
+  volumeSeriesReader->SetFileName(args_info.input_arg);
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(volumeSeriesReader->Update())
 
   // Geometry
-  if(args_info.verbose_flag)
-    std::cout << "Reading geometry information from "
-              << args_info.geometry_arg
-              << "..."
-              << std::endl;
+  if (args_info.verbose_flag)
+    std::cout << "Reading geometry information from " << args_info.geometry_arg << "..." << std::endl;
   rtk::ThreeDCircularProjectionGeometryXMLFileReader::Pointer geometryReader;
   geometryReader = rtk::ThreeDCircularProjectionGeometryXMLFileReader::New();
   geometryReader->SetFilename(args_info.geometry_arg);
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( geometryReader->GenerateOutputInformation() )
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(geometryReader->GenerateOutputInformation())
 
   // Read the phases file
   rtk::PhasesToInterpolationWeights::Pointer phaseReader = rtk::PhasesToInterpolationWeights::New();
   phaseReader->SetFileName(args_info.signal_arg);
   phaseReader->SetNumberOfReconstructedFrames(volumeSeriesReader->GetOutput()->GetLargestPossibleRegion().GetSize(3));
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( phaseReader->Update() )
-  
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(phaseReader->Update())
+
   // Read DVF
   DVFReaderType::Pointer dvfReader = DVFReaderType::New();
-  dvfReader->SetFileName( args_info.dvf_arg );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( dvfReader->Update() )
+  dvfReader->SetFileName(args_info.dvf_arg);
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(dvfReader->Update())
 
-  if(args_info.verbose_flag)
-    std::cout << "Projecting volume sequence..." << std::flush;
-  itk::TimeProbe projProbe;
+  if (args_info.verbose_flag)
+    std::cout << "Projecting volume sequence..." << std::endl;
 
-  typedef rtk::WarpFourDToProjectionStackImageFilter< VolumeSeriesType, ProjectionStackType> WarpForwardProjectType;
+  using WarpForwardProjectType = rtk::WarpFourDToProjectionStackImageFilter<VolumeSeriesType, ProjectionStackType>;
   WarpForwardProjectType::Pointer forwardProjection = WarpForwardProjectType::New();
 
-  forwardProjection->SetInputProjectionStack( constantImageSource->GetOutput() );
-  forwardProjection->SetInputVolumeSeries( volumeSeriesReader->GetOutput() );
-  forwardProjection->SetDisplacementField( dvfReader->GetOutput() );
-  forwardProjection->SetGeometry( geometryReader->GetOutputObject() );
+  forwardProjection->SetInputProjectionStack(constantImageSource->GetOutput());
+  forwardProjection->SetInputVolumeSeries(volumeSeriesReader->GetOutput());
+  forwardProjection->SetDisplacementField(dvfReader->GetOutput());
+  forwardProjection->SetGeometry(geometryReader->GetOutputObject());
   forwardProjection->SetWeights(phaseReader->GetOutput());
   forwardProjection->SetSignal(rtk::ReadSignalFile(args_info.signal_arg));
-
-  projProbe.Start();
-  
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( forwardProjection->Update() )
-
-  projProbe.Stop();
-  if(args_info.verbose_flag)
-    std::cout << " done in "
-              << projProbe.GetMean() << ' ' << projProbe.GetUnit()
-              << '.' << std::endl;
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(forwardProjection->Update())
 
   // Write
-  if(args_info.verbose_flag)
-    std::cout << "Writing... " << std::flush;
-  itk::TimeProbe writeProbe;
-  typedef itk::ImageFileWriter< ProjectionStackType > WriterType;
+  if (args_info.verbose_flag)
+    std::cout << "Writing... " << std::endl;
+  using WriterType = itk::ImageFileWriter<ProjectionStackType>;
   WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName( args_info.output_arg );
-  writer->SetInput( forwardProjection->GetOutput() );
-  writeProbe.Start();
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
-  writeProbe.Stop();
-  if(args_info.verbose_flag)
-    std::cout << " done in "
-              << writeProbe.GetMean() << ' ' << projProbe.GetUnit()
-              << '.' << std::endl;
+  writer->SetFileName(args_info.output_arg);
+  writer->SetInput(forwardProjection->GetOutput());
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(writer->Update())
 
   return EXIT_SUCCESS;
 }

@@ -33,7 +33,7 @@
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 
 /* C99 says to define __STDC_LIMIT_MACROS before including stdint.h,
- * if you want the limit (max/min) macros for int types. 
+ * if you want the limit (max/min) macros for int types.
  */
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS 1
@@ -50,7 +50,7 @@ typedef uint32_t flex_uint32_t;
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
 typedef int flex_int32_t;
-typedef unsigned char flex_uint8_t; 
+typedef unsigned char flex_uint8_t;
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
 #endif /* ! C99 */
@@ -175,10 +175,10 @@ typedef struct lp_yy_buffer_state *YY_BUFFER_STATE;
 
     /* Note: We specifically omit the test for lp_yy_rule_can_match_eol because it requires
      *       access to the local variable lp_yy_act. Since lp_yyless() is a macro, it would break
-     *       existing scanners that call lp_yyless() from OUTSIDE lp_yylex. 
+     *       existing scanners that call lp_yyless() from OUTSIDE lp_yylex.
      *       One obvious solution it to make lp_yy_act a global. I tried that, and saw
      *       a 5% performance hit in a non-lp_yylineno scanner, because lp_yy_act is
-     *       normally declared as a register variable-- so it is not worth it.
+     *       normally declared as a variable-- so it is not worth it.
      */
     #define  YY_LESS_LINENO(n) \
             do { \
@@ -187,7 +187,7 @@ typedef struct lp_yy_buffer_state *YY_BUFFER_STATE;
                     if ( lp_yytext[lp_yyl] == '\n' )\
                         --lp_yylineno;\
             }while(0)
-    
+
 /* Return all but the first "n" matched characters back to the input stream. */
 #define lp_yyless(n) \
 	do \
@@ -249,7 +249,7 @@ struct lp_yy_buffer_state
 
     int lp_yy_bs_lineno; /**< The line count. */
     int lp_yy_bs_column; /**< The column count. */
-    
+
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
 	 */
@@ -575,7 +575,7 @@ static lp_yyconst flex_int16_t lp_yy_chk[426] =
 /* Table of booleans, true if rule could match eol. */
 static lp_yyconst flex_int32_t lp_yy_rule_can_match_eol[34] =
     {   0,
-0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 
+0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,     };
 
 /* The intent behind this definition is that it'll catch
@@ -657,7 +657,7 @@ static int lp_yy_init_globals (lp_yyscan_t lp_yyscanner );
     /* This must go here because YYSTYPE and YYLTYPE are included
      * from bison output in section 1.*/
     #    define lp_yylval lp_yyg->lp_yylval_r
-    
+
 int lp_yylex_init (lp_yyscan_t* scanner);
 
 int lp_yylex_init_extra (YY_EXTRA_TYPE user_defined,lp_yyscan_t* scanner);
@@ -708,7 +708,7 @@ extern int lp_yywrap (lp_yyscan_t lp_yyscanner );
 #endif
 
     static void lp_yyunput (int c,char *buf_ptr  ,lp_yyscan_t lp_yyscanner);
-    
+
 #ifndef lp_yytext_ptr
 static void lp_yy_flex_strncpy (char *,lp_yyconst char *,int ,lp_yyscan_t lp_yyscanner);
 #endif
@@ -831,9 +831,9 @@ extern int lp_yylex \
  */
 YY_DECL
 {
-	register lp_yy_state_type lp_yy_current_state;
-	register char *lp_yy_cp, *lp_yy_bp;
-	register int lp_yy_act;
+	lp_yy_state_type lp_yy_current_state;
+	char *lp_yy_cp, *lp_yy_bp;
+	int lp_yy_act;
     struct lp_yyguts_t * lp_yyg = (struct lp_yyguts_t*)lp_yyscanner;
 
     lp_yylval = lp_yylval_param;
@@ -881,7 +881,7 @@ YY_DECL
 lp_yy_match:
 		do
 			{
-			register YY_CHAR lp_yy_c = lp_yy_ec[YY_SC_TO_UI(*lp_yy_cp)];
+			YY_CHAR lp_yy_c = lp_yy_ec[YY_SC_TO_UI(*lp_yy_cp)];
 			if ( lp_yy_accept[lp_yy_current_state] )
 				{
 				lp_yyg->lp_yy_last_accepting_state = lp_yy_current_state;
@@ -914,7 +914,7 @@ lp_yy_find_action:
 			int lp_yyl;
 			for ( lp_yyl = 0; lp_yyl < lp_yyleng; ++lp_yyl )
 				if ( lp_yytext[lp_yyl] == '\n' )
-					   
+					
     do{ lp_yylineno++;
         lp_yycolumn=0;
     }while(0)
@@ -1414,9 +1414,9 @@ case YY_STATE_EOF(LINECOMMENT):
 static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 {
     struct lp_yyguts_t * lp_yyg = (struct lp_yyguts_t*)lp_yyscanner;
-	register char *dest = YY_CURRENT_BUFFER_LVALUE->lp_yy_ch_buf;
-	register char *source = lp_yyg->lp_yytext_ptr;
-	register int number_to_move, i;
+	char *dest = YY_CURRENT_BUFFER_LVALUE->lp_yy_ch_buf;
+	char *source = lp_yyg->lp_yytext_ptr;
+	int number_to_move, i;
 	int ret_val;
 
 	if ( lp_yyg->lp_yy_c_buf_p > &YY_CURRENT_BUFFER_LVALUE->lp_yy_ch_buf[lp_yyg->lp_yy_n_chars + 1] )
@@ -1548,8 +1548,8 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 
     static lp_yy_state_type lp_yy_get_previous_state (lp_yyscan_t lp_yyscanner)
 {
-	register lp_yy_state_type lp_yy_current_state;
-	register char *lp_yy_cp;
+	lp_yy_state_type lp_yy_current_state;
+	char *lp_yy_cp;
     struct lp_yyguts_t * lp_yyg = (struct lp_yyguts_t*)lp_yyscanner;
 
 	lp_yy_current_state = lp_yyg->lp_yy_start;
@@ -1557,7 +1557,7 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 
 	for ( lp_yy_cp = lp_yyg->lp_yytext_ptr + YY_MORE_ADJ; lp_yy_cp < lp_yyg->lp_yy_c_buf_p; ++lp_yy_cp )
 		{
-		register YY_CHAR lp_yy_c = (*lp_yy_cp ? lp_yy_ec[YY_SC_TO_UI(*lp_yy_cp)] : 1);
+		YY_CHAR lp_yy_c = (*lp_yy_cp ? lp_yy_ec[YY_SC_TO_UI(*lp_yy_cp)] : 1);
 		if ( lp_yy_accept[lp_yy_current_state] )
 			{
 			lp_yyg->lp_yy_last_accepting_state = lp_yy_current_state;
@@ -1582,11 +1582,11 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
  */
     static lp_yy_state_type lp_yy_try_NUL_trans  (lp_yy_state_type lp_yy_current_state , lp_yyscan_t lp_yyscanner)
 {
-	register int lp_yy_is_jam;
+	int lp_yy_is_jam;
     struct lp_yyguts_t * lp_yyg = (struct lp_yyguts_t*)lp_yyscanner; /* This var may be unused depending upon options. */
-	register char *lp_yy_cp = lp_yyg->lp_yy_c_buf_p;
+	char *lp_yy_cp = lp_yyg->lp_yy_c_buf_p;
 
-	register YY_CHAR lp_yy_c = 1;
+	YY_CHAR lp_yy_c = 1;
 	if ( lp_yy_accept[lp_yy_current_state] )
 		{
 		lp_yyg->lp_yy_last_accepting_state = lp_yy_current_state;
@@ -1604,9 +1604,9 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 	return lp_yy_is_jam ? 0 : lp_yy_current_state;
 }
 
-    static void lp_yyunput (int c, register char * lp_yy_bp , lp_yyscan_t lp_yyscanner)
+    static void lp_yyunput (int c, char * lp_yy_bp , lp_yyscan_t lp_yyscanner)
 {
-	register char *lp_yy_cp;
+	char *lp_yy_cp;
     struct lp_yyguts_t * lp_yyg = (struct lp_yyguts_t*)lp_yyscanner;
 
     lp_yy_cp = lp_yyg->lp_yy_c_buf_p;
@@ -1617,10 +1617,10 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 	if ( lp_yy_cp < YY_CURRENT_BUFFER_LVALUE->lp_yy_ch_buf + 2 )
 		{ /* need to shift things up to make room */
 		/* +2 for EOB chars. */
-		register int number_to_move = lp_yyg->lp_yy_n_chars + 2;
-		register char *dest = &YY_CURRENT_BUFFER_LVALUE->lp_yy_ch_buf[
+		int number_to_move = lp_yyg->lp_yy_n_chars + 2;
+		char *dest = &YY_CURRENT_BUFFER_LVALUE->lp_yy_ch_buf[
 					YY_CURRENT_BUFFER_LVALUE->lp_yy_buf_size + 2];
-		register char *source =
+		char *source =
 				&YY_CURRENT_BUFFER_LVALUE->lp_yy_ch_buf[number_to_move];
 
 		while ( source > YY_CURRENT_BUFFER_LVALUE->lp_yy_ch_buf )
@@ -1648,9 +1648,9 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 
 #ifndef YY_NO_INPUT
 #ifdef __cplusplus
-    static int lp_yyinput (lp_yyscan_t lp_yyscanner)
+    static inline int lp_yyinput (lp_yyscan_t lp_yyscanner)
 #else
-    static int input  (lp_yyscan_t lp_yyscanner)
+    static inline int input  (lp_yyscan_t lp_yyscanner)
 #endif
 
 {
@@ -1719,7 +1719,7 @@ static int lp_yy_get_next_buffer (lp_yyscan_t lp_yyscanner)
 
 	YY_CURRENT_BUFFER_LVALUE->lp_yy_at_bol = (c == '\n');
 	if ( YY_CURRENT_BUFFER_LVALUE->lp_yy_at_bol )
-		   
+		
     do{ lp_yylineno++;
         lp_yycolumn=0;
     }while(0)
@@ -1802,7 +1802,7 @@ static void lp_yy_load_buffer_state  (lp_yyscan_t lp_yyscanner)
     YY_BUFFER_STATE lp_yy_create_buffer  (FILE * file, int  size , lp_yyscan_t lp_yyscanner)
 {
 	YY_BUFFER_STATE b;
-    
+
 	b = (YY_BUFFER_STATE) lp_yyalloc(sizeof( struct lp_yy_buffer_state ) ,lp_yyscanner );
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in lp_yy_create_buffer()" );
@@ -1846,7 +1846,7 @@ static void lp_yy_load_buffer_state  (lp_yyscan_t lp_yyscanner)
 #ifndef __cplusplus
 extern int isatty (int );
 #endif /* __cplusplus */
-    
+
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
  * such as during a lp_yyrestart() or at EOF.
@@ -1872,7 +1872,7 @@ extern int isatty (int );
     }
 
         b->lp_yy_is_interactive = file ? (isatty( fileno(file) ) > 0) : 0;
-    
+
 	errno = oerrno;
 }
 
@@ -1978,7 +1978,7 @@ static void lp_yyensure_buffer_stack (lp_yyscan_t lp_yyscanner)
 								, lp_yyscanner);
 		if ( ! lp_yyg->lp_yy_buffer_stack )
 			YY_FATAL_ERROR( "out of dynamic memory in lp_yyensure_buffer_stack()" );
-								  
+								
 		memset(lp_yyg->lp_yy_buffer_stack, 0, num_to_alloc * sizeof(struct lp_yy_buffer_state*));
 				
 		lp_yyg->lp_yy_buffer_stack_max = num_to_alloc;
@@ -2009,12 +2009,12 @@ static void lp_yyensure_buffer_stack (lp_yyscan_t lp_yyscanner)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * @param lp_yyscanner The scanner object.
- * @return the newly allocated buffer state object. 
+ * @return the newly allocated buffer state object.
  */
 YY_BUFFER_STATE lp_yy_scan_buffer  (char * base, lp_yy_size_t  size , lp_yyscan_t lp_yyscanner)
 {
 	YY_BUFFER_STATE b;
-    
+
 	if ( size < 2 ||
 	     base[size-2] != YY_END_OF_BUFFER_CHAR ||
 	     base[size-1] != YY_END_OF_BUFFER_CHAR )
@@ -2050,7 +2050,7 @@ YY_BUFFER_STATE lp_yy_scan_buffer  (char * base, lp_yy_size_t  size , lp_yyscan_
  */
 YY_BUFFER_STATE lp_yy_scan_string (lp_yyconst char * lp_yystr , lp_yyscan_t lp_yyscanner)
 {
-    
+
 	return lp_yy_scan_bytes(lp_yystr,strlen(lp_yystr) ,lp_yyscanner);
 }
 
@@ -2067,7 +2067,7 @@ YY_BUFFER_STATE lp_yy_scan_bytes  (lp_yyconst char * lp_yybytes, int  _lp_yybyte
 	char *buf;
 	lp_yy_size_t n;
 	int i;
-    
+
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _lp_yybytes_len + 2;
 	buf = (char *) lp_yyalloc(n ,lp_yyscanner );
@@ -2097,6 +2097,7 @@ YY_BUFFER_STATE lp_yy_scan_bytes  (lp_yyconst char * lp_yybytes, int  _lp_yybyte
 
 static void lp_yy_fatal_error (lp_yyconst char* msg , lp_yyscan_t lp_yyscanner)
 {
+        (void) lp_yyscanner; /* Remove unused parameter warning */
     	(void) fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
 }
@@ -2135,10 +2136,10 @@ YY_EXTRA_TYPE lp_yyget_extra  (lp_yyscan_t lp_yyscanner)
 int lp_yyget_lineno  (lp_yyscan_t lp_yyscanner)
 {
     struct lp_yyguts_t * lp_yyg = (struct lp_yyguts_t*)lp_yyscanner;
-    
+
         if (! YY_CURRENT_BUFFER)
             return 0;
-    
+
     return lp_yylineno;
 }
 
@@ -2148,10 +2149,10 @@ int lp_yyget_lineno  (lp_yyscan_t lp_yyscanner)
 int lp_yyget_column  (lp_yyscan_t lp_yyscanner)
 {
     struct lp_yyguts_t * lp_yyg = (struct lp_yyguts_t*)lp_yyscanner;
-    
+
         if (! YY_CURRENT_BUFFER)
             return 0;
-    
+
     return lp_yycolumn;
 }
 
@@ -2212,8 +2213,8 @@ void lp_yyset_lineno (int  line_number , lp_yyscan_t lp_yyscanner)
 
         /* lineno is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           lp_yy_fatal_error( "lp_yyset_lineno called with no buffer" , lp_yyscanner); 
-    
+           lp_yy_fatal_error( "lp_yyset_lineno called with no buffer" , lp_yyscanner);
+
     lp_yylineno = line_number;
 }
 
@@ -2227,8 +2228,8 @@ void lp_yyset_column (int  column_no , lp_yyscan_t lp_yyscanner)
 
         /* column is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           lp_yy_fatal_error( "lp_yyset_column called with no buffer" , lp_yyscanner); 
-    
+           lp_yy_fatal_error( "lp_yyset_column called with no buffer" , lp_yyscanner);
+
     lp_yycolumn = column_no;
 }
 
@@ -2330,13 +2331,13 @@ int lp_yylex_init_extra(YY_EXTRA_TYPE lp_yy_user_defined,lp_yyscan_t* ptr_lp_yy_
         errno = ENOMEM;
         return 1;
     }
-    
+
     /* By setting to 0xAA, we expose bugs in
     lp_yy_init_globals. Leave at 0x00 for releases. */
     memset(*ptr_lp_yy_globals,0x00,sizeof(struct lp_yyguts_t));
-    
+
     lp_yyset_extra (lp_yy_user_defined, *ptr_lp_yy_globals);
-    
+
     return lp_yy_init_globals ( *ptr_lp_yy_globals );
 }
 
@@ -2410,7 +2411,7 @@ int lp_yylex_destroy  (lp_yyscan_t lp_yyscanner)
 #ifndef lp_yytext_ptr
 static void lp_yy_flex_strncpy (char* s1, lp_yyconst char * s2, int n , lp_yyscan_t lp_yyscanner)
 {
-	register int i;
+	int i;
 	for ( i = 0; i < n; ++i )
 		s1[i] = s2[i];
 }
@@ -2419,7 +2420,7 @@ static void lp_yy_flex_strncpy (char* s1, lp_yyconst char * s2, int n , lp_yysca
 #ifdef YY_NEED_STRLEN
 static int lp_yy_flex_strlen (lp_yyconst char * s , lp_yyscan_t lp_yyscanner)
 {
-	register int n;
+	int n;
 	for ( n = 0; s[n]; ++n )
 		;
 
@@ -2429,11 +2430,13 @@ static int lp_yy_flex_strlen (lp_yyconst char * s , lp_yyscan_t lp_yyscanner)
 
 void *lp_yyalloc (lp_yy_size_t  size , lp_yyscan_t lp_yyscanner)
 {
+        (void) lp_yyscanner; /* Remove unused parameter warning */
 	return (void *) malloc( size );
 }
 
 void *lp_yyrealloc  (void * ptr, lp_yy_size_t  size , lp_yyscan_t lp_yyscanner)
 {
+        (void) lp_yyscanner; /* Remove unused parameter warning */
 	/* The cast to (char *) in the following accommodates both
 	 * implementations that use char* generic pointers, and those
 	 * that use void* generic pointers.  It works with the latter
@@ -2446,6 +2449,7 @@ void *lp_yyrealloc  (void * ptr, lp_yy_size_t  size , lp_yyscan_t lp_yyscanner)
 
 void lp_yyfree (void * ptr , lp_yyscan_t lp_yyscanner)
 {
+        (void) lp_yyscanner; /* Remove unused parameter warning */
 	free( (char *) ptr );	/* see lp_yyrealloc() for (char *) cast */
 }
 

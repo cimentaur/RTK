@@ -24,46 +24,44 @@
 
 #include <itkImageFileWriter.h>
 
-int main(int argc, char * argv[])
+int
+main(int argc, char * argv[])
 {
   GGO(rtkfdktwodweights, args_info);
 
-  typedef float OutputPixelType;
-  const unsigned int Dimension = 3;
+  using OutputPixelType = float;
+  constexpr unsigned int Dimension = 3;
 
-  typedef itk::Image< OutputPixelType, Dimension > OutputImageType;
+  using OutputImageType = itk::Image<OutputPixelType, Dimension>;
 
   // Projections reader
-  typedef rtk::ProjectionsReader< OutputImageType > ReaderType;
+  using ReaderType = rtk::ProjectionsReader<OutputImageType>;
   ReaderType::Pointer reader = ReaderType::New();
   rtk::SetProjectionsReaderFromGgo<ReaderType, args_info_rtkfdktwodweights>(reader, args_info);
 
   // Geometry
-  if(args_info.verbose_flag)
-    std::cout << "Reading geometry information from "
-              << args_info.geometry_arg
-              << "..."
-              << std::endl;
+  if (args_info.verbose_flag)
+    std::cout << "Reading geometry information from " << args_info.geometry_arg << "..." << std::endl;
   rtk::ThreeDCircularProjectionGeometryXMLFileReader::Pointer geometryReader;
   geometryReader = rtk::ThreeDCircularProjectionGeometryXMLFileReader::New();
   geometryReader->SetFilename(args_info.geometry_arg);
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( geometryReader->GenerateOutputInformation() )
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(geometryReader->GenerateOutputInformation())
 
   // Weights filter
-  typedef rtk::FDKWeightProjectionFilter< OutputImageType > WeightType;
+  using WeightType = rtk::FDKWeightProjectionFilter<OutputImageType>;
   WeightType::Pointer wf = WeightType::New();
-  wf->SetInput( reader->GetOutput() );
-  wf->SetGeometry( geometryReader->GetOutputObject() );
-  wf->SetNumberOfThreads(1);
+  wf->SetInput(reader->GetOutput());
+  wf->SetGeometry(geometryReader->GetOutputObject());
+  wf->SetNumberOfWorkUnits(1);
   wf->InPlaceOff();
 
   // Write
-  typedef itk::ImageFileWriter<  OutputImageType > WriterType;
+  using WriterType = itk::ImageFileWriter<OutputImageType>;
   WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName( args_info.output_arg );
-  writer->SetInput( wf->GetOutput() );
-  writer->SetNumberOfStreamDivisions( args_info.divisions_arg );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
+  writer->SetFileName(args_info.output_arg);
+  writer->SetInput(wf->GetOutput());
+  writer->SetNumberOfStreamDivisions(args_info.divisions_arg);
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(writer->Update())
 
   return EXIT_SUCCESS;
 }

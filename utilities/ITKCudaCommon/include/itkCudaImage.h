@@ -1,22 +1,22 @@
 /*=========================================================================
-*
-*  Copyright Insight Software Consortium
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*         http://www.apache.org/licenses/LICENSE-2.0.txt
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-*
-*=========================================================================*/
-#ifndef __itkCudaImage_h
-#define __itkCudaImage_h
+ *
+ *  Copyright NumFOCUS
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0.txt
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *=========================================================================*/
+#ifndef itkCudaImage_h
+#define itkCudaImage_h
 
 #include "itkImage.h"
 #include "itkCudaImageDataManager.h"
@@ -36,137 +36,151 @@ namespace itk
  * \ingroup ITKCudaCommon
  */
 template <class TPixel, unsigned int VImageDimension = 2>
-class ITK_EXPORT CudaImage : public Image<TPixel,VImageDimension>
+class ITK_EXPORT CudaImage : public Image<TPixel, VImageDimension>
 {
 public:
-  typedef CudaImage                     Self;
-  typedef Image<TPixel,VImageDimension> Superclass;
-  typedef SmartPointer<Self>            Pointer;
-  typedef SmartPointer<const Self>      ConstPointer;
-  typedef WeakPointer<const Self>       ConstWeakPointer;
+  using Self = CudaImage;
+  using Superclass = Image<TPixel, VImageDimension>;
+  using Pointer = SmartPointer<Self>;
+  using ConstPointer = SmartPointer<const Self>;
+  using ConstWeakPointer = WeakPointer<const Self>;
 
   itkNewMacro(Self);
 
   itkTypeMacro(CudaImage, Image);
 
-  itkStaticConstMacro(ImageDimension, unsigned int, VImageDimension);
+  static constexpr unsigned int ImageDimension = VImageDimension;
 
-  typedef typename Superclass::PixelType         PixelType;
-  typedef typename Superclass::ValueType         ValueType;
-  typedef typename Superclass::InternalPixelType InternalPixelType;
-  typedef typename Superclass::IOPixelType       IOPixelType;
-  typedef typename Superclass::DirectionType     DirectionType;
-  typedef typename Superclass::SpacingType       SpacingType;
-  typedef typename Superclass::PixelContainer    PixelContainer;
-  typedef typename Superclass::SizeType          SizeType;
-  typedef typename Superclass::IndexType         IndexType;
-  typedef typename Superclass::OffsetType        OffsetType;
-  typedef typename Superclass::RegionType        RegionType;
-  typedef typename PixelContainer::Pointer       PixelContainerPointer;
-  typedef typename PixelContainer::ConstPointer  PixelContainerConstPointer;
-  typedef typename Superclass::AccessorType      AccessorType;
-   
-  typedef unsigned long                         ModifiedTimeType;
-  typedef DefaultPixelAccessorFunctor< Self >   AccessorFunctorType;
+  using PixelType = typename Superclass::PixelType;
+  using ValueType = typename Superclass::ValueType;
+  using InternalPixelType = typename Superclass::InternalPixelType;
+  using IOPixelType = typename Superclass::IOPixelType;
+  using DirectionType = typename Superclass::DirectionType;
+  using SpacingType = typename Superclass::SpacingType;
+  using PixelContainer = typename Superclass::PixelContainer;
+  using SizeType = typename Superclass::SizeType;
+  using IndexType = typename Superclass::IndexType;
+  using OffsetType = typename Superclass::OffsetType;
+  using RegionType = typename Superclass::RegionType;
+  using PixelContainerPointer = typename PixelContainer::Pointer;
+  using PixelContainerConstPointer = typename PixelContainer::ConstPointer;
+  using AccessorType = typename Superclass::AccessorType;
 
-  typedef NeighborhoodAccessorFunctor< Self >   NeighborhoodAccessorFunctorType;
+  using ModifiedTimeType = unsigned long;
+  using AccessorFunctorType = DefaultPixelAccessorFunctor<Self>;
+
+  using NeighborhoodAccessorFunctorType = NeighborhoodAccessorFunctor<Self>;
 
   /**
    * example usage:
-   * typedef typename ImageType::template Rebind< float >::Type OutputImageType;
+   * using OutputImageType = typename ImageType::template Rebind< float >::Type;
    *
    */
-  template <typename UPixelType, unsigned int UImageDimension = VImageDimension>
+  template <typename TRebindPixel, unsigned int VRebindImageDimension = VImageDimension>
   struct Rebind
-    {
-      typedef itk::CudaImage<UPixelType, UImageDimension>  Type;
-    };
+  {
+    using Type = itk::CudaImage<TRebindPixel, VRebindImageDimension>;
+  };
 
   //
   // Allocate CPU and Cuda memory space
   //
-#if ITK_VERSION_MAJOR < 4 || (ITK_VERSION_MAJOR == 4 && ITK_VERSION_MINOR < 6)
-  void Allocate();
-#else
-  void Allocate(bool initializePixels = false);
-#endif
+  void
+  Allocate(bool initializePixels = false) override;
 
-  virtual void Initialize();
+  void
+  Initialize() override;
 
-  void FillBuffer(const TPixel & value);
+  void
+  FillBuffer(const TPixel & value);
 
-  void SetPixel(const IndexType & index, const TPixel & value);
+  void
+  SetPixel(const IndexType & index, const TPixel & value);
 
-  const TPixel & GetPixel(const IndexType & index) const;
+  const TPixel &
+  GetPixel(const IndexType & index) const;
 
-  TPixel & GetPixel(const IndexType & index);
+  TPixel &
+  GetPixel(const IndexType & index);
 
   const TPixel & operator[](const IndexType & index) const;
 
   TPixel & operator[](const IndexType & index);
 
   /** Explicit synchronize CPU/Cuda buffers */
-  void UpdateBuffers();
+  void
+  UpdateBuffers();
 
   //
   // Get CPU buffer pointer
   //
-  TPixel* GetBufferPointer();
+  TPixel *
+  GetBufferPointer() override;
 
-  const TPixel * GetBufferPointer() const;
+  const TPixel *
+  GetBufferPointer() const override;
 
   /** Return the Pixel Accessor object */
-  AccessorType GetPixelAccessor(void)
+  AccessorType
+  GetPixelAccessor(void)
   {
     m_DataManager->SetGPUBufferDirty();
     return Superclass::GetPixelAccessor();
   }
 
   /** Return the Pixel Accesor object */
-  const AccessorType GetPixelAccessor(void) const
+  const AccessorType
+  GetPixelAccessor(void) const
   {
     m_DataManager->UpdateCPUBuffer();
     return Superclass::GetPixelAccessor();
   }
 
   /** Return the NeighborhoodAccessor functor */
-  NeighborhoodAccessorFunctorType GetNeighborhoodAccessor()
+  NeighborhoodAccessorFunctorType
+  GetNeighborhoodAccessor()
   {
     m_DataManager->SetGPUBufferDirty();
-    //return Superclass::GetNeighborhoodAccessor();
+    // return Superclass::GetNeighborhoodAccessor();
     return NeighborhoodAccessorFunctorType();
   }
 
   /** Return the NeighborhoodAccessor functor */
-  const NeighborhoodAccessorFunctorType GetNeighborhoodAccessor() const
+  const NeighborhoodAccessorFunctorType
+  GetNeighborhoodAccessor() const
   {
     m_DataManager->UpdateCPUBuffer();
-    //return Superclass::GetNeighborhoodAccessor();
+    // return Superclass::GetNeighborhoodAccessor();
     return NeighborhoodAccessorFunctorType();
   }
 
-  void SetPixelContainer(PixelContainer *container);
+  void
+  SetPixelContainer(PixelContainer * container);
 
   /** Return a pointer to the container. */
-  PixelContainer * GetPixelContainer()
+  PixelContainer *
+  GetPixelContainer()
   {
-    m_DataManager->SetGPUBufferDirty(); 
+    m_DataManager->SetGPUBufferDirty();
     return Superclass::GetPixelContainer();
   }
 
-  const PixelContainer * GetPixelContainer() const
+  const PixelContainer *
+  GetPixelContainer() const
   {
     m_DataManager->UpdateCPUBuffer();
     return Superclass::GetPixelContainer();
   }
 
-  itkGetObjectMacro(DataManager, CudaImageDataManager< CudaImage >);
+  itkGetModifiableObjectMacro(DataManager, CudaImageDataManager<CudaImage>);
 
-  CudaDataManager::Pointer GetCudaDataManager() const;
-  
+  CudaDataManager::Pointer
+  GetCudaDataManager() const;
+
   /** Overload the SetBufferedRegion function because if the size changes we need
    *  to invalidated the GPU buffer */
-  void SetBufferedRegion(const RegionType & region);
+  void
+  SetBufferedRegion(const RegionType & region) override;
 
   /* Override DataHasBeenGenerated() in DataObject class.
    * We need this because CPU time stamp is always bigger
@@ -175,44 +189,54 @@ public:
    * increment Cuda's time stamp in CudaGenerateData() the
    * CPU's time stamp will be increased after that.
    */
-  void DataHasBeenGenerated()
+  void
+  DataHasBeenGenerated() override
   {
     Superclass::DataHasBeenGenerated();
     if (m_DataManager->IsCPUBufferDirty())
-      {
+    {
       m_DataManager->Modified();
-      }
+    }
   }
 
   /** Graft the data and information from one CudaImage to another. */
-  virtual void Graft(const DataObject *data);
-  
+  void
+  Graft(const Self * data);
+
 protected:
+  void
+  Graft(const DataObject * data) override;
+
   CudaImage();
   virtual ~CudaImage();
+  using Superclass::Graft;
 
 private:
-
   // functions that are purposely not implemented
-  CudaImage(const Self&);
-  void operator=(const Self&);
-  
-  typename CudaImageDataManager< CudaImage >::Pointer m_DataManager;
+  CudaImage(const Self &);
+  void
+  operator=(const Self &);
+
+  typename CudaImageDataManager<CudaImage>::Pointer m_DataManager;
 };
 
 class CudaImageFactory : public itk::ObjectFactoryBase
 {
 public:
-  typedef CudaImageFactory              Self;
-  typedef itk::ObjectFactoryBase        Superclass;
-  typedef itk::SmartPointer<Self>       Pointer;
-  typedef itk::SmartPointer<const Self> ConstPointer;
+  using Self = CudaImageFactory;
+  using Superclass = itk::ObjectFactoryBase;
+  using Pointer = itk::SmartPointer<Self>;
+  using ConstPointer = itk::SmartPointer<const Self>;
 
   /** Class methods used to interface with the registered factories. */
-  virtual const char* GetITKSourceVersion() const {
+  const char *
+  GetITKSourceVersion() const override
+  {
     return ITK_SOURCE_VERSION;
   }
-  const char* GetDescription() const {
+  const char *
+  GetDescription() const override
+  {
     return "A Factory for CudaImage";
   }
 
@@ -223,7 +247,8 @@ public:
   itkTypeMacro(CudaImageFactory, itk::ObjectFactoryBase);
 
   /** Register one factory of this type  */
-  static void RegisterOneFactory(void)
+  static void
+  RegisterOneFactory(void)
   {
     CudaImageFactory::Pointer factory = CudaImageFactory::New();
 
@@ -231,23 +256,24 @@ public:
   }
 
 private:
-  CudaImageFactory(const Self&); //purposely not implemented
-  void operator=(const Self&);  //purposely not implemented
+  CudaImageFactory(const Self &); // purposely not implemented
+  void
+  operator=(const Self &); // purposely not implemented
 
-#define OverrideImageTypeMacro(pt,dm)    this->RegisterOverride(\
-    typeid(itk::Image<pt,dm>).name(), \
-    typeid(itk::CudaImage<pt,dm>).name(), \
-    "Cuda Image Override", \
-    true, \
-    itk::CreateObjectFunction<CudaImage<pt,dm> >::New())
+#define OverrideImageTypeMacro(pt, dm)                                                                                 \
+  this->RegisterOverride(typeid(itk::Image<pt, dm>).name(),                                                            \
+                         typeid(itk::CudaImage<pt, dm>).name(),                                                        \
+                         "Cuda Image Override",                                                                        \
+                         true,                                                                                         \
+                         itk::CreateObjectFunction<CudaImage<pt, dm>>::New())
 
   CudaImageFactory()
   {
     if (IsCudaAvailable())
-      {
+    {
       // 1/2/3D
       OverrideImageTypeMacro(unsigned char, 1);
-      OverrideImageTypeMacro(signed char,  1);
+      OverrideImageTypeMacro(signed char, 1);
       OverrideImageTypeMacro(int, 1);
       OverrideImageTypeMacro(unsigned int, 1);
       OverrideImageTypeMacro(float, 1);
@@ -266,29 +292,28 @@ private:
       OverrideImageTypeMacro(unsigned int, 3);
       OverrideImageTypeMacro(float, 3);
       OverrideImageTypeMacro(double, 3);
-      }
+    }
   }
-
 };
 
 template <class T>
 class CudaTraits
 {
 public:
-  typedef T Type;
+  using Type = T;
 };
 
 template <class TPixelType, unsigned int NDimension>
-class CudaTraits< Image< TPixelType, NDimension > >
+class CudaTraits<Image<TPixelType, NDimension>>
 {
 public:
-  typedef CudaImage<TPixelType,NDimension> Type;
+  using Type = CudaImage<TPixelType, NDimension>;
 };
 
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkCudaImage.hxx"
+#  include "itkCudaImage.hxx"
 #endif
 
 #endif

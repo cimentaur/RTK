@@ -22,28 +22,30 @@
 
 #include <itkImageFileWriter.h>
 
-int main(int argc, char * argv[])
+int
+main(int argc, char * argv[])
 {
   GGO(rtkprojections, args_info);
 
-  typedef float OutputPixelType;
-  const unsigned int Dimension = 3;
-  typedef itk::Image< OutputPixelType, Dimension > OutputImageType;
+  using OutputPixelType = float;
+  constexpr unsigned int Dimension = 3;
+  using OutputImageType = itk::Image<OutputPixelType, Dimension>;
 
   // Projections reader
-  typedef rtk::ProjectionsReader< OutputImageType > ReaderType;
+  using ReaderType = rtk::ProjectionsReader<OutputImageType>;
   ReaderType::Pointer reader = ReaderType::New();
   rtk::SetProjectionsReaderFromGgo<ReaderType, args_info_rtkprojections>(reader, args_info);
 
   // Write
-  typedef itk::ImageFileWriter<  OutputImageType > WriterType;
+  using WriterType = itk::ImageFileWriter<OutputImageType>;
   WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName( args_info.output_arg );
-  writer->SetInput( reader->GetOutput() );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->UpdateOutputInformation() )
-  writer->SetNumberOfStreamDivisions( 1 + reader->GetOutput()->GetLargestPossibleRegion().GetNumberOfPixels() / (1024*1024*4) );
+  writer->SetFileName(args_info.output_arg);
+  writer->SetInput(reader->GetOutput());
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(writer->UpdateOutputInformation())
+  writer->SetNumberOfStreamDivisions(1 + reader->GetOutput()->GetLargestPossibleRegion().GetNumberOfPixels() /
+                                           (1024 * 1024 * 4));
 
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(writer->Update())
 
   return EXIT_SUCCESS;
 }

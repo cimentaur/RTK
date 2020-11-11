@@ -3,22 +3,8 @@
 #
 include (${CMAKE_ROOT}/Modules/Documentation.cmake)
 
-
-find_package(LATEX)
-if(PDFLATEX_COMPILER)
-  file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/Doxygen/html)
-  add_custom_target( GeometryDocumentation
-                     COMMAND ${PDFLATEX_COMPILER} ${PROJECT_SOURCE_DIR}/documentation/geometry.tex
-                     DEPENDS ${PROJECT_SOURCE_DIR}/documentation/geometry.tex
-                     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/Doxygen/html
-                    )
-  set(LATEXTARGETS GeometryDocumentation)
-else()
-  set(LATEXTARGETS "")
-endif()
-
 find_package(Doxygen)
-if (BUILD_DOXYGEN)
+if (RTK_BUILD_DOXYGEN)
 
   #
   # Configure the script and the doxyfile, then add target
@@ -45,7 +31,7 @@ if (BUILD_DOXYGEN)
   if(EXISTS ${ITK_DOXYGEN_COMPRESSED_TAG_FILE})
     find_program(GZIP_TOOL NAMES gzip)
     if(GZIP_TOOL)
-      execute_process(COMMAND ${GZIP_TOOL} -dkf ${ITK_DOXYGEN_COMPRESSED_TAG_FILE})    
+      execute_process(COMMAND ${GZIP_TOOL} -dkf ${ITK_DOXYGEN_COMPRESSED_TAG_FILE})
       set(DOXYGEN_TAGFILES_PARAMETER "${ITK_DOXYGEN_TAG_FILE}=http://www.itk.org/Doxygen/html/")
     endif()
   else()
@@ -58,7 +44,7 @@ if (BUILD_DOXYGEN)
   configure_file(${PROJECT_SOURCE_DIR}/documentation/Doxygen/itkdoxygen.pl.in
                  ${PROJECT_BINARY_DIR}/Doxygen/itkdoxygen.pl)
 
-  add_custom_target(Documentation 
+  add_custom_target(Documentation
     COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/Doxygen/doxygen.config
     MAIN_DEPENDENCY ${PROJECT_BINARY_DIR}/Doxygen/doxygen.config
     DEPENDS         ${PROJECT_BINARY_DIR}/Doxygen/itkdoxygen.pl ${LATEXTARGETS}

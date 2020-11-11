@@ -27,68 +27,66 @@
 
 #include <itkImageFileWriter.h>
 
-int main(int argc, char * argv[])
+int
+main(int argc, char * argv[])
 {
   GGO(rtkwangdisplaceddetectorweighting, args_info);
 
   // Check on hardware parameter
 #ifndef RTK_USE_CUDA
-  if(!strcmp(args_info.hardware_arg, "cuda") )
-    {
+  if (!strcmp(args_info.hardware_arg, "cuda"))
+  {
     std::cerr << "The program has not been compiled with cuda option" << std::endl;
     return EXIT_FAILURE;
-    }
+  }
 #endif
 
-  typedef float OutputPixelType;
-  const unsigned int Dimension = 3;
+  using OutputPixelType = float;
+  constexpr unsigned int Dimension = 3;
 
 #ifdef RTK_USE_CUDA
-  typedef itk::CudaImage< OutputPixelType, Dimension > OutputImageType;
+  using OutputImageType = itk::CudaImage<OutputPixelType, Dimension>;
 #else
-  typedef itk::Image< OutputPixelType, Dimension > OutputImageType;
+  using OutputImageType = itk::Image<OutputPixelType, Dimension>;
 #endif
 
   // Projections reader
-  typedef rtk::ProjectionsReader< OutputImageType > ReaderType;
+  using ReaderType = rtk::ProjectionsReader<OutputImageType>;
   ReaderType::Pointer reader = ReaderType::New();
   rtk::SetProjectionsReaderFromGgo<ReaderType, args_info_rtkwangdisplaceddetectorweighting>(reader, args_info);
 
   // Geometry
-  if(args_info.verbose_flag)
-    std::cout << "Reading geometry information from "
-              << args_info.geometry_arg
-              << "..."
-              << std::endl;
+  if (args_info.verbose_flag)
+    std::cout << "Reading geometry information from " << args_info.geometry_arg << "..." << std::endl;
   rtk::ThreeDCircularProjectionGeometryXMLFileReader::Pointer geometryReader;
   geometryReader = rtk::ThreeDCircularProjectionGeometryXMLFileReader::New();
   geometryReader->SetFilename(args_info.geometry_arg);
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( geometryReader->GenerateOutputInformation() )
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(geometryReader->GenerateOutputInformation())
 
   // Displaced detector weighting
-  typedef rtk::DisplacedDetectorImageFilter< OutputImageType > DDFCPUType;
+  using DDFCPUType = rtk::DisplacedDetectorImageFilter<OutputImageType>;
 #ifdef RTK_USE_CUDA
-  typedef rtk::CudaDisplacedDetectorImageFilter DDFType;
+  using DDFType = rtk::CudaDisplacedDetectorImageFilter;
 #else
-  typedef rtk::DisplacedDetectorImageFilter< OutputImageType > DDFType;
+  using DDFType = rtk::DisplacedDetectorImageFilter<OutputImageType>;
 #endif
   DDFCPUType::Pointer ddf;
-  if(!strcmp(args_info.hardware_arg, "cuda") )
+  if (!strcmp(args_info.hardware_arg, "cuda"))
     ddf = DDFType::New();
   else
     ddf = DDFCPUType::New();
-  ddf->SetInput( reader->GetOutput() );
-  ddf->SetGeometry( geometryReader->GetOutputObject() );
-  if(args_info.minOffset_given && args_info.maxOffset_given)
-    ddf->SetOffsets( args_info.minOffset_arg, args_info.maxOffset_arg );
+  ddf->SetInput(reader->GetOutput());
+  ddf->SetGeometry(geometryReader->GetOutputObject());
+  if (args_info.minOffset_given && args_info.maxOffset_given)
+    ddf->SetOffsets(args_info.minOffset_arg, args_info.maxOffset_arg);
 
   // Write
-  typedef itk::ImageFileWriter<  OutputImageType > WriterType;
+  using WriterType = itk::ImageFileWriter<OutputImageType>;
   WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName( args_info.output_arg );
-  writer->SetInput( ddf->GetOutput() );
-  writer->SetNumberOfStreamDivisions( args_info.divisions_arg );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
+  writer->SetFileName(args_info.output_arg);
+  writer->SetInput(ddf->GetOutput());
+  writer->SetNumberOfStreamDivisions(args_info.divisions_arg);
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(writer->Update())
 
   return EXIT_SUCCESS;
 }

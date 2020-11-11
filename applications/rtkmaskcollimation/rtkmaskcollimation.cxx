@@ -25,46 +25,44 @@
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
 
-int main(int argc, char * argv[])
+int
+main(int argc, char * argv[])
 {
   GGO(rtkmaskcollimation, args_info);
 
-  typedef float OutputPixelType;
-  const unsigned int Dimension = 3;
+  using OutputPixelType = float;
+  constexpr unsigned int Dimension = 3;
 
-  typedef itk::Image< OutputPixelType, Dimension > OutputImageType;
+  using OutputImageType = itk::Image<OutputPixelType, Dimension>;
 
   // Geometry
-  if(args_info.verbose_flag)
-    std::cout << "Reading geometry information from "
-              << args_info.geometry_arg
-              << "..."
-              << std::endl;
+  if (args_info.verbose_flag)
+    std::cout << "Reading geometry information from " << args_info.geometry_arg << "..." << std::endl;
   rtk::ThreeDCircularProjectionGeometryXMLFileReader::Pointer geometryReader;
   geometryReader = rtk::ThreeDCircularProjectionGeometryXMLFileReader::New();
   geometryReader->SetFilename(args_info.geometry_arg);
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( geometryReader->GenerateOutputInformation() )
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(geometryReader->GenerateOutputInformation())
 
   // Projections reader
-  typedef rtk::ProjectionsReader< OutputImageType > ReaderType;
+  using ReaderType = rtk::ProjectionsReader<OutputImageType>;
   ReaderType::Pointer reader = ReaderType::New();
   rtk::SetProjectionsReaderFromGgo<ReaderType, args_info_rtkmaskcollimation>(reader, args_info);
 
   // Create projection image filter
-  typedef rtk::MaskCollimationImageFilter<OutputImageType, OutputImageType> OFMType;
+  using OFMType = rtk::MaskCollimationImageFilter<OutputImageType, OutputImageType>;
   OFMType::Pointer ofm = OFMType::New();
-  ofm->SetInput( reader->GetOutput() );
-  ofm->SetGeometry( geometryReader->GetOutputObject() );
+  ofm->SetInput(reader->GetOutput());
+  ofm->SetGeometry(geometryReader->GetOutputObject());
 
   // Write
-  typedef itk::ImageFileWriter<  OutputImageType > WriterType;
+  using WriterType = itk::ImageFileWriter<OutputImageType>;
   WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName( args_info.output_arg );
-  writer->SetInput( ofm->GetOutput() );
-  if(args_info.verbose_flag)
+  writer->SetFileName(args_info.output_arg);
+  writer->SetInput(ofm->GetOutput());
+  if (args_info.verbose_flag)
     std::cout << "Projecting and writing... " << std::flush;
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->UpdateOutputInformation() )
-  writer->SetNumberOfStreamDivisions( reader->GetOutput()->GetLargestPossibleRegion().GetSize(2) );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(writer->UpdateOutputInformation())
+  writer->SetNumberOfStreamDivisions(reader->GetOutput()->GetLargestPossibleRegion().GetSize(2));
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(writer->Update())
   return EXIT_SUCCESS;
 }

@@ -1,13 +1,16 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required(VERSION 3.9.5 FATAL_ERROR)
 
 # This project is designed to be built outside the RTK source tree.
 project(FirstReconstruction)
 
-# Find the RTK libraries and includes
-find_package(RTK REQUIRED)
-include(${RTK_USE_FILE})
+# Find ITK with RTK
+find_package(ITK REQUIRED COMPONENTS RTK)
+include(${ITK_USE_FILE})
 
-# Executable
+# Executable(s)
 add_executable(FirstReconstruction FirstReconstruction.cxx )
-target_link_libraries(FirstReconstruction ${RTK_LIBRARIES})
 target_link_libraries(FirstReconstruction ${ITK_LIBRARIES})
+if(${RTK_USE_CUDA})
+  add_executable(FirstCudaReconstruction FirstCudaReconstruction.cxx )
+  target_link_libraries(FirstCudaReconstruction ${ITK_LIBRARIES})
+endif()

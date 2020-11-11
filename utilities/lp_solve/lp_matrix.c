@@ -1053,13 +1053,13 @@ STATIC MYBOOL mat_setrow(MATrec *mat, int rowno, int count, REAL *row, int *coln
 
   /* Optionally tally and map the new non-zero values */
   i  = mat->row_end[rowno-1];
-  ii = mat->row_end[rowno];     // ****** KE 20070106 - was "-1"
+  ii = mat->row_end[rowno];     /* ****** KE 20070106 - was "-1" */
   firstcol = mat->columns + 1;
   if(isNZ) {
     /* See if we can do fast in-place replacements of leading items */
     colnr = 1; /* initialise in case of an empty row */
     while((i < ii) /* && (count > 0) */ && ((colnr = ROW_MAT_COLNR(i)) == *colno) && (count > 0)) {
-      value = *row;             // ****** KE 20080111 - Added line
+      value = *row;             /* ****** KE 20080111 - Added line */
       if(mat->is_roworder) {
         if(isA && doscale)
           value = scaled_mat(lp, value, colnr, rowno);
@@ -1098,7 +1098,7 @@ STATIC MYBOOL mat_setrow(MATrec *mat, int rowno, int count, REAL *row, int *coln
     else
       colnr = 0;
     for(k = 1; k <= kk; k++) {
-      value = row[k];           // ****** KE 20080111 - Added line
+      value = row[k];           /* ****** KE 20080111 - Added line */
       if(fabs(value) > mat->epsvalue) {
         /* See if we can do fast in-place replacements of leading items */
         if((addto == NULL) && (i < ii) && (colnr == k)) {
@@ -1993,6 +1993,8 @@ MYBOOL mat_get_data(lprec *lp, int matindex, MYBOOL isrow, int **rownr, int **co
 MYBOOL mat_set_rowmap(MATrec *mat, int row_mat_index, int rownr, int colnr, int col_mat_index)
 {
 #if MatrixRowAccess == RAM_Index
+  (void)rownr;
+  (void)colnr;
   mat->row_mat[row_mat_index] = col_mat_index;
 
 #elif MatrixColAccess==CAM_Record
@@ -2268,8 +2270,8 @@ STATIC void mat_multcol(MATrec *mat, int col_nr, REAL mult, MYBOOL DoObj)
 STATIC void mat_multadd(MATrec *mat, REAL *lhsvector, int varnr, REAL mult)
 {
   int               colnr;
-  register int      ib, ie, *matRownr;
-  register REAL     *matValue;
+  int      ib, ie, *matRownr;
+  REAL     *matValue;
 
   /* Handle case of a slack variable */
   if(varnr <= mat->lp->rows) {
@@ -3132,6 +3134,7 @@ STATIC MYBOOL bimprove(lprec *lp, REAL *rhsvector, int *nzidx, REAL roundzero)
 
 STATIC void ftran(lprec *lp, REAL *rhsvector, int *nzidx, REAL roundzero)
 {
+  (void)roundzero;
 #if 0
   if(is_action(lp->improve, IMPROVE_SOLUTION) && lp->bfp_pivotcount(lp))
     fimprove(lp, rhsvector, nzidx, roundzero);
@@ -3142,6 +3145,7 @@ STATIC void ftran(lprec *lp, REAL *rhsvector, int *nzidx, REAL roundzero)
 
 STATIC void btran(lprec *lp, REAL *rhsvector, int *nzidx, REAL roundzero)
 {
+  (void)roundzero;
 #if 0
   if(is_action(lp->improve, IMPROVE_SOLUTION) && lp->bfp_pivotcount(lp))
     bimprove(lp, rhsvector, nzidx, roundzero);
@@ -3322,12 +3326,14 @@ STATIC int prod_Ax(lprec *lp, int *coltarget, REAL *input, int *nzinput,
                               REAL *output, int *nzoutput, int roundmode)
 /* prod_Ax is only used in fimprove; note that it is NOT VALIDATED/verified as of 20030801 - KE */
 {
+  (void)nzoutput;
   int      j, colnr, ib, ie, vb, ve;
   MYBOOL   localset, localnz = FALSE, isRC;
   MATrec   *mat = lp->matA;
   REAL     sdp;
   REAL     *value;
   int      *rownr;
+  (void)nzoutput;
 
   /* Find what variable range to scan - default is {SCAN_USERVARS} */
   /* Define default column target if none was provided */
@@ -3338,7 +3344,14 @@ STATIC int prod_Ax(lprec *lp, int *coltarget, REAL *input, int *nzinput,
                  USE_BASICVARS | OMIT_FIXED;
     if(isRC && is_piv_mode(lp, PRICE_PARTIAL) && !is_piv_mode(lp, PRICE_FORCEFULL))
       varset |= SCAN_PARTIALBLOCK;
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-align"
+#endif
     coltarget = (int *) mempool_obtainVector(lp->workarrays, lp->sum+1, sizeof(*coltarget));
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
     if(!get_colIndexA(lp, varset, coltarget, FALSE)) {
       mempool_releaseVector(lp->workarrays, (char *) coltarget, FALSE);
       return(FALSE);
@@ -3346,7 +3359,14 @@ STATIC int prod_Ax(lprec *lp, int *coltarget, REAL *input, int *nzinput,
   }
   localnz = (MYBOOL) (nzinput == NULL);
   if(localnz) {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-align"
+#endif
     nzinput = (int *) mempool_obtainVector(lp->workarrays, lp->rows+1, sizeof(*nzinput));
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
     vec_compress(input, 0, lp->rows, lp->matA->epsvalue, NULL, nzinput);
   }
 
@@ -3394,11 +3414,11 @@ STATIC int prod_xA(lprec *lp, int *coltarget,
   int      colnr, rownr, varnr, ib, ie, vb, ve, nrows = lp->rows;
   MYBOOL   localset, localnz = FALSE, includeOF, isRC;
   REALXP   vmax;
-  register REALXP v;
+  REALXP v;
   int      inz, *rowin, countNZ = 0;
   MATrec   *mat = lp->matA;
-  register REAL     *matValue;
-  register int      *matRownr;
+  REAL     *matValue;
+  int      *matRownr;
 
   /* Clean output area (only necessary if we are returning the full vector) */
   isRC = (MYBOOL) ((roundmode & MAT_ROUNDRC) != 0);
@@ -3417,7 +3437,14 @@ STATIC int prod_xA(lprec *lp, int *coltarget,
                  USE_NONBASICVARS | OMIT_FIXED;
     if(isRC && is_piv_mode(lp, PRICE_PARTIAL) && !is_piv_mode(lp, PRICE_FORCEFULL))
       varset |= SCAN_PARTIALBLOCK;
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-align"
+#endif
     coltarget = (int *) mempool_obtainVector(lp->workarrays, lp->sum+1, sizeof(*coltarget));
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
     if(!get_colIndexA(lp, varset, coltarget, FALSE)) {
       mempool_releaseVector(lp->workarrays, (char *) coltarget, FALSE);
       return(FALSE);
@@ -3606,11 +3633,11 @@ STATIC MYBOOL prod_xA2(lprec *lp, int *coltarget,
   int      varnr, colnr, ib, ie, vb, ve, nrows = lp->rows;
   MYBOOL   includeOF, isRC;
   REALXP   dmax, pmax;
-  register REALXP d, p;
+  REALXP d, p;
   MATrec   *mat = lp->matA;
   REAL     value;
-  register REAL     *matValue;
-  register int      *matRownr;
+  REAL     *matValue;
+  int      *matRownr;
   MYBOOL localset;
 
   /* Find what variable range to scan - default is {SCAN_USERVARS} */
@@ -3620,7 +3647,14 @@ STATIC MYBOOL prod_xA2(lprec *lp, int *coltarget,
     int varset = SCAN_SLACKVARS + SCAN_USERVARS + /*SCAN_ALLVARS +*/
                  /*SCAN_PARTIALBLOCK+*/
                  USE_NONBASICVARS+OMIT_FIXED;
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-align"
+#endif
     coltarget = (int *) mempool_obtainVector(lp->workarrays, lp->sum+1, sizeof(*coltarget));
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
     if(!get_colIndexA(lp, varset, coltarget, FALSE)) {
       mempool_releaseVector(lp->workarrays, (char *) coltarget, FALSE);
       return(FALSE);

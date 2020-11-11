@@ -6,13 +6,15 @@
 
 
 /* DON'T MODIFY */
-MYBOOL BFP_CALLMODEL bfp_init(lprec *lp, int size, int delta, char *options)
+MYBOOL BFP_CALLMODEL bfp_init(lprec *lp, int size, int delta, const char *options)
 {
+  (void) delta;
   INVrec *lu;
+  (void) delta;
 
   lp->invB = (INVrec *) calloc(1, sizeof(*(lp->invB)));
   lu = lp->invB;
-  if((lu == NULL) || 
+  if((lu == NULL) ||
      !lp->bfp_resize(lp, size) ||
      !lp->bfp_restart(lp))
     return( FALSE );
@@ -57,6 +59,7 @@ MYBOOL BFP_CALLMODEL bfp_restart(lprec *lp)
 /* DON'T MODIFY */
 MYBOOL BFP_CALLMODEL bfp_implicitslack(lprec *lp)
 {
+  (void) lp;
   return( FALSE );
 }
 
@@ -70,6 +73,7 @@ int BFP_CALLMODEL bfp_colcount(lprec *lp)
 /* DON'T MODIFY */
 MYBOOL BFP_CALLMODEL bfp_canresetbasis(lprec *lp)
 {
+  (void) lp;
   return( FALSE );
 }
 
@@ -77,6 +81,8 @@ MYBOOL BFP_CALLMODEL bfp_canresetbasis(lprec *lp)
 /* DON'T MODIFY */
 MYBOOL BFP_CALLMODEL bfp_pivotalloc(lprec *lp, int newsize)
 {
+  (void)lp;
+  (void)newsize;
   /* Does nothing in the default implementation */
   return( TRUE );
 }
@@ -147,9 +153,9 @@ REAL BFP_CALLMODEL bfp_pivotRHS(lprec *lp, LREAL theta, REAL *pcol)
     pcol = lu->pcol;
 
   if(theta != 0) {
-    register int    i, n = lp->rows;
-    register LREAL  roundzero = lp->epsvalue;
-    register LREAL  *rhs = lp->rhs, rhsmax = 0;
+    int    i, n = lp->rows;
+    LREAL  roundzero = lp->epsvalue;
+    LREAL  *rhs = lp->rhs, rhsmax = 0;
 
     for(i = 0; i <= n; i++, rhs++, pcol++) {
       (*rhs) -= theta * (*pcol);

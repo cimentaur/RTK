@@ -1,4 +1,4 @@
- /*=========================================================================
+/*=========================================================================
  *
  *  Copyright RTK Consortium
  *
@@ -30,35 +30,35 @@
 #include <itkImageFileWriter.h>
 #include <itkExtractImageFilter.h>
 #include <itkPasteImageFilter.h>
-#include <itkTimeProbe.h>
 
-int main(int argc, char * argv[])
+int
+main(int argc, char * argv[])
 {
   GGO(rtkgaincorrection, args_info);
 
-  const unsigned int Dimension = 3;
+  constexpr unsigned int Dimension = 3;
 #ifdef RTK_USE_CUDA
-  typedef itk::CudaImage< unsigned short, Dimension > InputImageType;
-  typedef itk::CudaImage< float, Dimension >          OutputImageType;
+  using InputImageType = itk::CudaImage<unsigned short, Dimension>;
+  using OutputImageType = itk::CudaImage<float, Dimension>;
 #else
-  typedef itk::Image< unsigned short, Dimension >     InputImageType;
-  typedef itk::Image< float, Dimension >              OutputImageType;
+  using InputImageType = itk::Image<unsigned short, Dimension>;
+  using OutputImageType = itk::Image<float, Dimension>;
 #endif
 
-  typedef rtk::ProjectionsReader< InputImageType > ReaderType;
+  using ReaderType = rtk::ProjectionsReader<InputImageType>;
   ReaderType::Pointer reader = ReaderType::New();
   rtk::SetProjectionsReaderFromGgo<ReaderType, args_info_rtkgaincorrection>(reader, args_info);
-  reader->ComputeLineIntegralOff();   // Don't want to preprocess data
-  reader->SetFileNames( rtk::GetProjectionsFileNamesFromGgo(args_info) );
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( reader->UpdateOutputInformation() )
+  reader->ComputeLineIntegralOff(); // Don't want to preprocess data
+  reader->SetFileNames(rtk::GetProjectionsFileNamesFromGgo(args_info));
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(reader->UpdateOutputInformation())
 
   // Input projection parameters
   int Nprojections = reader->GetOutput()->GetLargestPossibleRegion().GetSize(2);
   if (!Nprojections)
-    {
+  {
     std::cout << "No DR found to process!" << std::endl;
     return EXIT_FAILURE;
-    }
+  }
 
   // Load dark image
   std::string darkFile(args_info.calibDir_arg);
@@ -66,10 +66,10 @@ int main(int argc, char * argv[])
   darkFile.append(args_info.Dark_arg);
 
   InputImageType::Pointer darkImage;
-  typedef itk::ImageFileReader<InputImageType> DarkReaderType;
+  using DarkReaderType = itk::ImageFileReader<InputImageType>;
   DarkReaderType::Pointer readerDark = DarkReaderType::New();
   readerDark->SetFileName(darkFile);
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( readerDark->Update() )
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(readerDark->Update())
   darkImage = readerDark->GetOutput();
   darkImage->DisconnectPipeline();
 
@@ -79,17 +79,17 @@ int main(int argc, char * argv[])
   gainFile.append(args_info.Gain_arg);
 
   OutputImageType::Pointer gainImage;
-  typedef itk::ImageFileReader<OutputImageType> GainReaderType;
+  using GainReaderType = itk::ImageFileReader<OutputImageType>;
   GainReaderType::Pointer readerGain = GainReaderType::New();
   readerGain->SetFileName(gainFile);
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( readerGain->Update() )
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(readerGain->Update())
   gainImage = readerGain->GetOutput();
   gainImage->DisconnectPipeline();
 
 #ifdef RTK_USE_CUDA
-  typedef rtk::CudaPolynomialGainCorrectionImageFilter GainType;
+  using GainType = rtk::CudaPolynomialGainCorrectionImageFilter;
 #else
-  typedef rtk::PolynomialGainCorrectionImageFilter<InputImageType, OutputImageType> GainType;
+  using GainType = rtk::PolynomialGainCorrectionImageFilter<InputImageType, OutputImageType>;
 #endif
 
   GainType::Pointer gainfilter = GainType::New();
@@ -98,12 +98,12 @@ int main(int argc, char * argv[])
   gainfilter->SetK(args_info.K_arg);
 
   // Create empty volume for storing processed images
-  typedef rtk::ConstantImageSource< OutputImageType > ConstantImageSourceType;
+  using ConstantImageSourceType = rtk::ConstantImageSource<OutputImageType>;
   ConstantImageSourceType::Pointer constantSource = ConstantImageSourceType::New();
 
-  typedef itk::ExtractImageFilter<InputImageType, InputImageType> ExtractType;
+  using ExtractType = itk::ExtractImageFilter<InputImageType, InputImageType>;
 
-  typedef itk::PasteImageFilter<OutputImageType, OutputImageType> PasteType;
+  using PasteType = itk::PasteImageFilter<OutputImageType, OutputImageType>;
   PasteType::Pointer pasteFilter = PasteType::New();
   pasteFilter->SetDestinationImage(constantSource->GetOutput());
 
@@ -111,16 +111,16 @@ int main(int argc, char * argv[])
   int Nbuffers = static_cast<int>(std::ceil(static_cast<float>(Nprojections) / static_cast<float>(bufferSize)));
 
   bool first = true;
-  std::vector<float> preprocTimings;
   for (int bid = 0; bid < Nbuffers; ++bid)
-    {
-    int bufferIdx = bid*bufferSize;
+  {
+    int bufferIdx = bid * bufferSize;
     int currentBufferSize = std::min(Nprojections - bufferIdx, bufferSize);
 
-    std::cout << "Processing buffer no " << bid << " starting at image " << bufferIdx << " of size " << currentBufferSize << std::endl;
+    std::cout << "Processing buffer no " << bid << " starting at image " << bufferIdx << " of size "
+              << currentBufferSize << std::endl;
 
     InputImageType::RegionType sliceRegion = reader->GetOutput()->GetLargestPossibleRegion();
-    InputImageType::SizeType  size = sliceRegion.GetSize();
+    InputImageType::SizeType   size = sliceRegion.GetSize();
     size[2] = currentBufferSize;
 
     InputImageType::IndexType start = sliceRegion.GetIndex();
@@ -133,28 +133,21 @@ int main(int argc, char * argv[])
     extract->SetDirectionCollapseToIdentity();
     extract->SetExtractionRegion(desiredRegion);
     extract->SetInput(reader->GetOutput());
-    TRY_AND_EXIT_ON_ITK_EXCEPTION( extract->Update() )
+    TRY_AND_EXIT_ON_ITK_EXCEPTION(extract->Update())
 
     InputImageType::Pointer buffer = extract->GetOutput();
     buffer->DisconnectPipeline();
 
-    itk::TimeProbe probe;
-    probe.Start();
-
     gainfilter->SetInput(extract->GetOutput());
-    TRY_AND_EXIT_ON_ITK_EXCEPTION( gainfilter->Update() )
-
-    probe.Stop();
-    float rrtime = probe.GetMean() / static_cast<float>(currentBufferSize);
-    preprocTimings.push_back(rrtime);
+    TRY_AND_EXIT_ON_ITK_EXCEPTION(gainfilter->Update())
 
     if (first)
-      {
+    {
       // Initialization of the output volume
-      OutputImageType::SizeType    sizeInput = gainfilter->GetOutput()->GetLargestPossibleRegion().GetSize();
+      OutputImageType::SizeType sizeInput = gainfilter->GetOutput()->GetLargestPossibleRegion().GetSize();
       sizeInput[2] = Nprojections;
-      OutputImageType::SpacingType spacingInput = gainfilter->GetOutput()->GetSpacing();
-      OutputImageType::PointType   originInput = gainfilter->GetOutput()->GetOrigin();
+      OutputImageType::SpacingType   spacingInput = gainfilter->GetOutput()->GetSpacing();
+      OutputImageType::PointType     originInput = gainfilter->GetOutput()->GetOrigin();
       OutputImageType::DirectionType imageDirection;
       imageDirection.SetIdentity();
 
@@ -163,7 +156,7 @@ int main(int argc, char * argv[])
       constantSource->SetDirection(imageDirection);
       constantSource->SetSize(sizeInput);
       constantSource->SetConstant(0.);
-      }
+    }
 
     OutputImageType::Pointer procBuffer = gainfilter->GetOutput();
     procBuffer->DisconnectPipeline();
@@ -172,29 +165,24 @@ int main(int argc, char * argv[])
     current_idx[2] = bufferIdx;
 
     if (first)
-      {
+    {
       first = false;
-      }
+    }
     else
-      {
+    {
       pasteFilter->SetDestinationImage(pasteFilter->GetOutput());
-      }
+    }
     pasteFilter->SetSourceImage(procBuffer);
     pasteFilter->SetSourceRegion(procBuffer->GetLargestPossibleRegion());
     pasteFilter->SetDestinationIndex(current_idx);
-    TRY_AND_EXIT_ON_ITK_EXCEPTION( pasteFilter->Update() )
-    }
+    TRY_AND_EXIT_ON_ITK_EXCEPTION(pasteFilter->Update())
+  }
 
-  float sumpp = static_cast<float>(std::accumulate(preprocTimings.begin(), preprocTimings.end(), 0.0));
-  float meanpp = sumpp / static_cast<float>(preprocTimings.size());
-  std::cout << "Gain correction average time per projection [us]: " << meanpp/1.e6 << std::endl;
-
-  typedef itk::ImageFileWriter<OutputImageType> WriterType;
+  using WriterType = itk::ImageFileWriter<OutputImageType>;
   WriterType::Pointer writer = WriterType::New();
   writer->SetFileName(args_info.output_arg);
   writer->SetInput(pasteFilter->GetOutput());
-  TRY_AND_EXIT_ON_ITK_EXCEPTION( writer->Update() )
+  TRY_AND_EXIT_ON_ITK_EXCEPTION(writer->Update())
 
   return EXIT_SUCCESS;
 }
-

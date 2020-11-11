@@ -1,6 +1,6 @@
 /*=========================================================================
  *
- *  Copyright Insight Software Consortium
+ *  Copyright NumFOCUS
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkCudaImageToImageFilter_h
-#define __itkCudaImageToImageFilter_h
+#ifndef itkCudaImageToImageFilter_h
+#define itkCudaImageToImageFilter_h
 
 #include "itkImageToImageFilter.h"
-#include "itkCudaKernelManager.h"
+#include "itkCudaImage.h"
 
 namespace itk
 {
@@ -36,66 +36,70 @@ namespace itk
  *
  * \ingroup ITKCudaCommon
  */
-template< class TInputImage, class TOutputImage, class TParentImageFilter =
-            ImageToImageFilter< TInputImage, TOutputImage > >
+template <class TInputImage,
+          class TOutputImage,
+          class TParentImageFilter = ImageToImageFilter<TInputImage, TOutputImage>>
 class ITK_EXPORT CudaImageToImageFilter : public TParentImageFilter
 {
 public:
-  /** Standard class typedefs. */
-  typedef CudaImageToImageFilter     Self;
-  typedef TParentImageFilter         Superclass;
-  typedef SmartPointer< Self >       Pointer;
-  typedef SmartPointer< const Self > ConstPointer;
+  /** Standard class type alias. */
+  using Self = CudaImageToImageFilter;
+  using Superclass = TParentImageFilter;
+  using Pointer = SmartPointer<Self>;
+  using ConstPointer = SmartPointer<const Self>;
 
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(CudaImageToImageFilter, TParentImageFilter);
 
-  /** Superclass typedefs. */
-  //typedef typename Superclass::DataObjectIdentifierType DataObjectIdentifierType;
-  typedef unsigned int DataObjectIdentifierType;
+  /** Superclass type alias. */
+  using DataObjectIdentifierType = typename Superclass::DataObjectIdentifierType;
+  using OutputImageRegionType = typename Superclass::OutputImageRegionType;
+  using OutputImagePixelType = typename Superclass::OutputImagePixelType;
 
-  typedef typename Superclass::OutputImageRegionType    OutputImageRegionType;
-  typedef typename Superclass::OutputImagePixelType     OutputImagePixelType;
-
-  /** Some convenient typedefs. */
-  typedef TInputImage                           InputImageType;
-  typedef typename InputImageType::Pointer      InputImagePointer;
-  typedef typename InputImageType::ConstPointer InputImageConstPointer;
-  typedef typename InputImageType::RegionType   InputImageRegionType;
-  typedef typename InputImageType::PixelType    InputImagePixelType;
+  /** Some convenient type alias. */
+  using InputImageType = TInputImage;
+  using InputImagePointer = typename InputImageType::Pointer;
+  using InputImageConstPointer = typename InputImageType::ConstPointer;
+  using InputImageRegionType = typename InputImageType::RegionType;
+  using InputImagePixelType = typename InputImageType::PixelType;
 
   /** ImageDimension constants */
-  itkStaticConstMacro(InputImageDimension, unsigned int, TInputImage::ImageDimension);
-  itkStaticConstMacro(OutputImageDimension, unsigned int, TOutputImage::ImageDimension);
+  static constexpr unsigned int InputImageDimension = TInputImage::ImageDimension;
+  static constexpr unsigned int OutputImageDimension = TOutputImage::ImageDimension;
 
   // macro to set if Cuda is used
   itkSetMacro(GPUEnabled, bool);
   itkGetConstMacro(GPUEnabled, bool);
   itkBooleanMacro(GPUEnabled);
 
-  void GenerateData();
-
-  virtual void GraftOutput(DataObject *output);
-
-  virtual void GraftOutput(const DataObjectIdentifierType & key, DataObject *output);
+  void
+  GenerateData() override;
+  virtual void
+  GraftOutput(typename itk::CudaTraits<TOutputImage>::Type * output);
+  virtual void
+  GraftOutput(const DataObjectIdentifierType & key, typename itk::CudaTraits<TOutputImage>::Type * output);
 
 protected:
+  void
+  GraftOutput(DataObject * output) override;
+  void
+  GraftOutput(const DataObjectIdentifierType & key, DataObject * output) override;
   CudaImageToImageFilter();
   ~CudaImageToImageFilter();
 
-  virtual void PrintSelf(std::ostream & os, Indent indent) const;
+  virtual void
+  PrintSelf(std::ostream & os, Indent indent) const;
 
-  virtual void GPUGenerateData() {
-  }
-
-  // Cuda kernel manager
-  typename CudaKernelManager::Pointer m_CudaKernelManager;
+  virtual void
+  GPUGenerateData()
+  {}
 
 private:
-  CudaImageToImageFilter(const Self &); //purposely not implemented
-  void operator=(const Self &);        //purposely not implemented
+  CudaImageToImageFilter(const Self &); // purposely not implemented
+  void
+  operator=(const Self &); // purposely not implemented
 
   bool m_GPUEnabled;
 };
@@ -103,7 +107,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkCudaImageToImageFilter.hxx"
+#  include "itkCudaImageToImageFilter.hxx"
 #endif
 
 #endif

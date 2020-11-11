@@ -39,7 +39,7 @@
 
 
 /* MUST MODIFY */
-char * BFP_CALLMODEL bfp_name(void)
+const char * BFP_CALLMODEL bfp_name(void)
 {
   return( "LUSOL v2.2.1.0" );
 }
@@ -241,8 +241,10 @@ int bfp_LUSOLidentity(lprec *lp, int *rownum)
 /* LOCAL HELPER ROUTINE */
 int bfp_LUSOLfactorize(lprec *lp, MYBOOL *usedpos, int *rownum, int *singular)
 {
+  (void) usedpos;
   int    i, j, nz, deltarows = bfp_rowoffset(lp);
   INVrec *invB = lp->invB;
+  (void) usedpos;
 
   /* Handle normal, presumed nonsingular case */
   if(singular == NULL) {
